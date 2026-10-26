@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ChevronDown, NotebookTabs, Pin, Search, SquarePen, X } from "@lucide/vue";
+  import { ChevronDown, NotebookTabs, Pin, Search, SquarePen, Trash2, X } from "@lucide/vue";
   import { nextTick, ref } from "vue";
   import { useI18n } from "vue-i18n";
   import type { Note, NoteTag } from "@/app/types";
@@ -14,12 +14,14 @@
     preview: (note: Note) => string;
     tags: NoteTag[];
     tagName: (tag: NoteTag) => string;
+    canEmptyTrash: boolean;
   }>();
 
   const emit = defineEmits<{
     selectNote: [note: Note];
     newNote: [];
     updateQuery: [query: string];
+    emptyTrash: [];
   }>();
 
   const { t } = useI18n();
@@ -69,6 +71,15 @@
         />
       </div>
       <div class="notes__actions">
+        <IconButton
+          v-if="canEmptyTrash"
+          :icon="Trash2"
+          :size="16"
+          :label="t('actions.emptyTrash')"
+          :title="t('actions.emptyTrash')"
+          variant="destructive"
+          @click="emit('emptyTrash')"
+        />
         <IconButton
           :icon="searchVisible ? X : Search"
           :size="searchVisible ? 16 : 17"

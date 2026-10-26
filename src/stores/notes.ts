@@ -134,6 +134,7 @@ export function useNotesStore({
   const quitBlocked = ref(false);
   const pendingDeletionId = ref<string | null>(null);
   const pendingTagDeletionId = ref<TagId | null>(null);
+  const emptyTrashPending = ref(false);
   const nativeRuntime = isTauri();
 
   let initialized = false;
@@ -472,6 +473,20 @@ export function useNotesStore({
     pendingDeletionId.value = null;
   }
 
+  function requestEmptyTrash(): void {
+    if (notes.value.some((note) => note.trashed)) emptyTrashPending.value = true;
+  }
+
+  function confirmEmptyTrash(): void {
+    emptyTrashPending.value = false;
+    notes.value = notes.value.filter((note) => !note.trashed);
+    markDirty();
+  }
+
+  function cancelEmptyTrash(): void {
+    emptyTrashPending.value = false;
+  }
+
   function formatRelativeTime(timestamp: number): string {
     const difference = timestamp - Date.now();
     const absolute = Math.abs(difference);
@@ -598,9 +613,12 @@ export function useNotesStore({
     activeFilter: readonly(activeFilter),
     activeFilterTitle,
     cancelDelete,
+    cancelEmptyTrash,
     cancelQuit,
     confirmDelete,
+    confirmEmptyTrash,
     convertLegacyBody,
+    emptyTrashPending: readonly(emptyTrashPending),
     forceQuit,
     formatRelativeTime,
     newNote,
@@ -608,6 +626,7 @@ export function useNotesStore({
     notePreview,
     pendingDeletion,
     quitBlocked: readonly(quitBlocked),
+    requestEmptyTrash,
     requestQuit,
     retrySave,
     saved: readonly(saved),

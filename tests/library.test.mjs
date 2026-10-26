@@ -323,3 +323,26 @@ test("deleting a tag waits for confirmation and reports how many notes use it", 
   );
   assert.equal(store.selectedNote.value.tag, null);
 });
+
+test("emptying the trash removes only trashed notes, after confirmation", async () => {
+  const { store } = mountLibrary();
+  store.newNote();
+  store.updateTitle("À jeter");
+  store.trashOrDeleteNote();
+  store.newNote();
+  store.updateTitle("À garder");
+  await nextTick();
+
+  store.requestEmptyTrash();
+  assert.equal(store.emptyTrashPending.value, true);
+  store.cancelEmptyTrash();
+  assert.equal(store.emptyTrashPending.value, false);
+  assert.equal(store.noteCounts.value.trash, 1);
+
+  store.requestEmptyTrash();
+  store.confirmEmptyTrash();
+  await nextTick();
+  assert.equal(store.emptyTrashPending.value, false);
+  assert.equal(store.noteCounts.value.trash, 0);
+  assert.deepEqual(store.visibleNotes.value.map((note) => note.title).sort(), ["Note", "À garder"]);
+});

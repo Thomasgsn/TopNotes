@@ -1,5 +1,8 @@
 export const confirmMessages = {
   fr: {
+    emptyTrashTitle: "Vider la corbeille ?",
+    emptyTrashMessage:
+      "La note de la corbeille sera supprimée définitivement. Cette action est irréversible. | Les {count} notes de la corbeille seront supprimées définitivement. Cette action est irréversible.",
     deleteTagTitle: "Supprimer l’étiquette ?",
     deleteTagMessage:
       "« {name} » n’est utilisée par aucune note. | « {name} » sera retirée d’une note. Son contenu est conservé. | « {name} » sera retirée de {count} notes. Leur contenu est conservé.",
@@ -13,6 +16,9 @@ export const confirmMessages = {
     delete: "Supprimer",
   },
   en: {
+    emptyTrashTitle: "Empty Trash?",
+    emptyTrashMessage:
+      "The note in the Trash will be permanently deleted. This cannot be undone. | The {count} notes in the Trash will be permanently deleted. This cannot be undone.",
     deleteTagTitle: "Delete tag?",
     deleteTagMessage:
       "“{name}” is not used by any note. | “{name}” will be removed from 1 note. Its content is kept. | “{name}” will be removed from {count} notes. Their content is kept.",
@@ -26,6 +32,9 @@ export const confirmMessages = {
     delete: "Delete",
   },
   it: {
+    emptyTrashTitle: "Svuotare il cestino?",
+    emptyTrashMessage:
+      "La nota nel cestino verrà eliminata definitivamente. Questa azione non può essere annullata. | Le {count} note nel cestino verranno eliminate definitivamente. Questa azione non può essere annullata.",
     deleteTagTitle: "Eliminare l’etichetta?",
     deleteTagMessage:
       "«{name}» non è usata da nessuna nota. | «{name}» verrà rimossa da 1 nota. Il contenuto viene mantenuto. | «{name}» verrà rimossa da {count} note. Il contenuto viene mantenuto.",
@@ -39,6 +48,9 @@ export const confirmMessages = {
     delete: "Elimina",
   },
   es: {
+    emptyTrashTitle: "¿Vaciar la papelera?",
+    emptyTrashMessage:
+      "La nota de la papelera se eliminará definitivamente. Esta acción no se puede deshacer. | Las {count} notas de la papelera se eliminarán definitivamente. Esta acción no se puede deshacer.",
     deleteTagTitle: "¿Eliminar la etiqueta?",
     deleteTagMessage:
       "«{name}» no se usa en ninguna nota. | «{name}» se quitará de 1 nota. Su contenido se conserva. | «{name}» se quitará de {count} notas. Su contenido se conserva.",
@@ -52,6 +64,9 @@ export const confirmMessages = {
     delete: "Eliminar",
   },
   de: {
+    emptyTrashTitle: "Papierkorb leeren?",
+    emptyTrashMessage:
+      "Die Notiz im Papierkorb wird endgültig gelöscht. Dies kann nicht rückgängig gemacht werden. | Die {count} Notizen im Papierkorb werden endgültig gelöscht. Dies kann nicht rückgängig gemacht werden.",
     deleteTagTitle: "Tag löschen?",
     deleteTagMessage:
       "„{name}“ wird von keiner Notiz verwendet. | „{name}“ wird von 1 Notiz entfernt. Der Inhalt bleibt erhalten. | „{name}“ wird von {count} Notizen entfernt. Der Inhalt bleibt erhalten.",

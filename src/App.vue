@@ -47,9 +47,12 @@
     activeFilter,
     activeFilterTitle,
     cancelDelete,
+    cancelEmptyTrash,
     cancelQuit,
     confirmDelete,
+    confirmEmptyTrash,
     convertLegacyBody,
+    emptyTrashPending,
     forceQuit,
     formatRelativeTime,
     newNote,
@@ -57,6 +60,7 @@
     notePreview,
     pendingDeletion,
     quitBlocked,
+    requestEmptyTrash,
     restoreNote,
     retrySave,
     saved,
@@ -143,9 +147,11 @@
       :preview="notePreview"
       :tags="tags"
       :tag-name="tagName"
+      :can-empty-trash="activeFilter === 'trash' && noteCounts.trash > 0"
       @select-note="selectNote"
       @new-note="newNote"
       @update-query="setSearchQuery"
+      @empty-trash="requestEmptyTrash"
     />
     <EditorPanel
       :note="selectedNote"
@@ -212,6 +218,14 @@
       :confirm-label="t('confirm.delete')"
       @confirm="confirmDeleteTag"
       @cancel="cancelDeleteTag"
+    />
+    <ConfirmDialog
+      v-if="emptyTrashPending"
+      :title="t('confirm.emptyTrashTitle')"
+      :message="t('confirm.emptyTrashMessage', { count: noteCounts.trash }, noteCounts.trash)"
+      :confirm-label="t('actions.emptyTrash')"
+      @confirm="confirmEmptyTrash"
+      @cancel="cancelEmptyTrash"
     />
     <ConfirmDialog
       v-if="quitBlocked"
