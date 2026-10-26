@@ -1,5 +1,12 @@
 export default {
-  ignoreFiles: ["dist/**", "node_modules/**", "**/*.d.ts", ".vscode/**", "src-tauri/target/**", "src-tauri/gen/schemas/**"],
+  ignoreFiles: [
+    "dist/**",
+    "node_modules/**",
+    "**/*.d.ts",
+    ".vscode/**",
+    "src-tauri/target/**",
+    "src-tauri/gen/schemas/**",
+  ],
 
   extends: ["stylelint-config-standard"],
 

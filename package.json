@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "test": "node --test tests/*.test.mjs",
+    "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
     "test:eslint-config": "node --test tests/eslint-config.test.mjs",
     "test:styles": "node --test tests/styles-architecture.test.mjs",
     "test:window-drag": "node --test tests/window-drag.test.mjs",
@@ -14,8 +16,7 @@
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "dev:debug": "DEBUG=nuxt:* npm run dev",
-    "reinstall": "rm -rf node_modules package-lock.json bun.lockb .output .nuxt && npm install",
+    "reinstall": "rm -rf node_modules package-lock.json && npm install",
     "lint": "npm run eslint && npm run stylelint && npm run prettier",
     "lint:fix": "npm run eslint:fix && npm run stylelint:fix && npm run prettier:fix",
     "eslint": "eslint .",
@@ -24,7 +25,7 @@
     "stylelint:fix": "stylelint '**/*.{css,scss,vue}' --ignore-path .prettierignore --fix",
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
-    "typecheck": "nuxi typecheck",
+    "typecheck": "vue-tsc --noEmit",
     "prepare": "husky"
   },
   "lint-staged": {

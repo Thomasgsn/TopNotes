@@ -5,7 +5,14 @@ import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended"
 
 export default [
   {
-    ignores: ["dist/**", "node_modules/**", "**/*.d.ts", ".vscode/**", "src-tauri/target/**", "src-tauri/gen/schemas/**"],
+    ignores: [
+      "dist/**",
+      "node_modules/**",
+      "**/*.d.ts",
+      ".vscode/**",
+      "src-tauri/target/**",
+      "src-tauri/gen/schemas/**",
+    ],
   },
   ...pluginVue.configs["flat/recommended"],
   ...tseslint.configs.recommended,
