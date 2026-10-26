@@ -89,22 +89,36 @@ function normalizeSettings(value: unknown): PersistedSettings | null {
   };
 }
 
-function normalizeAppData(value: unknown): PersistedAppData | null {
+interface NormalizedAppData {
+  data: PersistedAppData;
+  // Notes this version cannot read (e.g. written by a newer version). They are
+  // hidden from the app but written back unchanged so they are never lost.
+  unreadableNotes: unknown[];
+}
+
+function normalizeAppData(value: unknown): NormalizedAppData | null {
   if (!value || typeof value !== "object") return null;
   const candidate = value as Partial<PersistedAppData>;
   if (candidate.schemaVersion !== SCHEMA_VERSION) return null;
 
-  const notes = candidate.notes;
+  const notes: unknown = candidate.notes;
   if (notes !== null && !Array.isArray(notes)) return null;
   const validNotes = notes === null ? null : notes.filter(isPersistedNote);
+  const unreadableNotes = notes === null ? [] : notes.filter((note) => !isPersistedNote(note));
   const settings = candidate.settings === null ? null : normalizeSettings(candidate.settings);
   if (candidate.settings !== null && settings === null) return null;
+  if (unreadableNotes.length) {
+    console.warn(`TopNotes kept ${unreadableNotes.length} note(s) it cannot read unchanged.`);
+  }
 
   return {
-    schemaVersion: SCHEMA_VERSION,
-    notes: validNotes,
-    tags: Array.isArray(candidate.tags) ? candidate.tags.filter(isNoteTag) : null,
-    settings,
+    data: {
+      schemaVersion: SCHEMA_VERSION,
+      notes: validNotes,
+      tags: Array.isArray(candidate.tags) ? candidate.tags.filter(isNoteTag) : null,
+      settings,
+    },
+    unreadableNotes,
   };
 }
 
@@ -145,6 +159,7 @@ function clearLegacyData(): void {
 
 abstract class SerializedPersistence implements Persistence {
   protected data = emptyAppData();
+  protected unreadableNotes: unknown[] = [];
   private writeQueue: Promise<void> = Promise.resolve();
 
   abstract load(): Promise<PersistedAppData>;
@@ -153,7 +168,7 @@ abstract class SerializedPersistence implements Persistence {
     const snapshot = notes.map((note) => ({ ...note }));
     const tagSnapshot = tags?.map((tag) => ({ ...tag }));
     return this.enqueue(async () => {
-      await this.writeNotes(snapshot, tagSnapshot);
+      await this.writeNotes([...snapshot, ...(this.unreadableNotes as Note[])], tagSnapshot);
       this.data = { ...this.data, notes: snapshot, tags: tagSnapshot ?? this.data.tags };
     });
   }
@@ -180,7 +195,8 @@ class NativePersistence extends SerializedPersistence {
   async load(): Promise<PersistedAppData> {
     const loaded = normalizeAppData(await invoke<unknown>("load_app_data"));
     if (!loaded) throw new Error("The native persistence layer returned invalid app data.");
-    this.data = loaded;
+    this.data = loaded.data;
+    this.unreadableNotes = loaded.unreadableNotes;
 
     const legacy = loadLegacyData();
     if (!legacy) return this.data;
@@ -202,14 +218,15 @@ class NativePersistence extends SerializedPersistence {
   }
 }
 
-class BrowserPersistence extends SerializedPersistence {
+export class BrowserPersistence extends SerializedPersistence {
   async load(): Promise<PersistedAppData> {
     const storedValue = localStorage.getItem(DATA_STORAGE_KEY);
     if (storedValue !== null) {
       try {
         const stored = normalizeAppData(JSON.parse(storedValue) as unknown);
         if (stored) {
-          this.data = stored;
+          this.data = stored.data;
+          this.unreadableNotes = stored.unreadableNotes;
           return this.data;
         }
       } catch {
