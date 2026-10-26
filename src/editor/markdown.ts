@@ -103,7 +103,21 @@ function documentText(node: JSONContent): string {
   return (node.content ?? []).map(documentText).join(node.type === "paragraph" ? "" : " ");
 }
 
+// Previews, search and statistics read every note on each keystroke; parsing is
+// the expensive part, so keep one cached text per note until its body changes.
+const noteTextCache = new WeakMap<object, { body: string; bodyFormat?: string; text: string }>();
+
 export function noteText(note: Pick<Note, "body" | "bodyFormat">): string {
+  const cached = noteTextCache.get(note);
+  if (cached && cached.body === note.body && cached.bodyFormat === note.bodyFormat) {
+    return cached.text;
+  }
+  const text = extractNoteText(note);
+  noteTextCache.set(note, { body: note.body, bodyFormat: note.bodyFormat, text });
+  return text;
+}
+
+function extractNoteText(note: Pick<Note, "body" | "bodyFormat">): string {
   if (note.bodyFormat === "markdown") {
     return documentText(markdown.parse(note.body)).replace(/\s+/g, " ").trim();
   }

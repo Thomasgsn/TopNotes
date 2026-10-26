@@ -313,3 +313,22 @@ test("real lists, headings and rules keep their Markdown syntax", () => {
   const markdown = "# Titre\n\n- un\n- deux\n\n1. premier\n\n---\n\nTexte";
   assert.equal(createEditor(markdown).getMarkdown(), markdown);
 });
+
+test("note text is computed once per body so long lists stay responsive", () => {
+  const notes = Array.from({ length: 500 }, (_, index) => ({
+    body: `# Note ${index}\n\nUn paragraphe **gras** et une liste\n\n- a\n- b`,
+    bodyFormat: "markdown",
+  }));
+  notes.forEach((note) => noteText(note));
+  const start = performance.now();
+  for (let render = 0; render < 5; render++) notes.forEach((note) => noteText(note));
+  assert.ok(performance.now() - start < 50, "re-rendering 500 previews must not re-parse them");
+  assert.equal(noteText(notes[3]), "Note 3 Un paragraphe gras et une liste a b");
+});
+
+test("cached note text follows body changes", () => {
+  const note = { body: "Avant", bodyFormat: "markdown" };
+  assert.equal(noteText(note), "Avant");
+  note.body = "**Après**";
+  assert.equal(noteText(note), "Après");
+});
