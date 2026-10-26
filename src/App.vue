@@ -75,7 +75,10 @@
     closeTags,
     addTag,
     editTag,
-    deleteTag,
+    requestDeleteTag,
+    confirmDeleteTag,
+    cancelDeleteTag,
+    pendingTagDeletion,
     toggleArchive,
     togglePin,
     trashOrDeleteNote,
@@ -182,7 +185,7 @@
       :tag-name="tagName"
       :add-tag="addTag"
       :edit-tag="editTag"
-      @delete="deleteTag"
+      @delete="requestDeleteTag"
       @close="closeTags"
     />
     <ShortcutsDialog v-if="shortcutsVisible" @close="shortcutsVisible = false" />
@@ -192,9 +195,23 @@
       :message="
         t('confirm.deleteNoteMessage', { title: pendingDeletion.title || t('app.untitled') })
       "
-      :confirm-label="t('confirm.deleteNote')"
+      :confirm-label="t('confirm.delete')"
       @confirm="confirmDelete"
       @cancel="cancelDelete"
+    />
+    <ConfirmDialog
+      v-if="pendingTagDeletion"
+      :title="t('confirm.deleteTagTitle')"
+      :message="
+        t(
+          'confirm.deleteTagMessage',
+          { name: tagName(pendingTagDeletion.tag), count: pendingTagDeletion.noteCount },
+          pendingTagDeletion.noteCount,
+        )
+      "
+      :confirm-label="t('confirm.delete')"
+      @confirm="confirmDeleteTag"
+      @cancel="cancelDeleteTag"
     />
     <ConfirmDialog
       v-if="quitBlocked"

@@ -89,7 +89,8 @@ test("custom tags can be added, assigned, renamed, filtered and deleted without 
   assert.equal(store.editTag(custom.id, "Projets", "#aabbcc"), null);
   assert.equal(store.activeFilterTitle.value, "Projets");
   assert.equal(store.selectedNote.value.tag, custom.id);
-  store.deleteTag(custom.id);
+  store.requestDeleteTag(custom.id);
+  store.confirmDeleteTag();
   await nextTick();
   assert.equal(store.selectedNote.value.tag, null);
   assert.equal(store.activeFilter.value, "all");
@@ -297,4 +298,28 @@ test("starter notes are stored as Markdown in every language", () => {
       assert.doesNotMatch(note.body, /<\/?[a-z]+>/, `${locale}: ${note.title}`);
     }
   }
+});
+
+test("deleting a tag waits for confirmation and reports how many notes use it", async () => {
+  const { store } = mountLibrary();
+  store.requestDeleteTag("work");
+  await nextTick();
+  assert.equal(store.pendingTagDeletion.value.tag.id, "work");
+  assert.equal(store.pendingTagDeletion.value.noteCount, 1);
+  assert.equal(store.selectedNote.value.tag, "work");
+
+  store.cancelDeleteTag();
+  await nextTick();
+  assert.equal(store.pendingTagDeletion.value, null);
+  assert.ok(store.tags.value.some((tag) => tag.id === "work"));
+
+  store.requestDeleteTag("work");
+  store.confirmDeleteTag();
+  await nextTick();
+  assert.equal(store.pendingTagDeletion.value, null);
+  assert.equal(
+    store.tags.value.some((tag) => tag.id === "work"),
+    false,
+  );
+  assert.equal(store.selectedNote.value.tag, null);
 });

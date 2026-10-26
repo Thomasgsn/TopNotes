@@ -133,6 +133,7 @@ export function useNotesStore({
   const saveError = ref(false);
   const quitBlocked = ref(false);
   const pendingDeletionId = ref<string | null>(null);
+  const pendingTagDeletionId = ref<TagId | null>(null);
   const nativeRuntime = isTauri();
 
   let initialized = false;
@@ -236,6 +237,26 @@ export function useNotesStore({
       markDirty();
     }
     return null;
+  }
+
+  const pendingTagDeletion = computed(() => {
+    const tag = tags.value.find((candidate) => candidate.id === pendingTagDeletionId.value);
+    if (!tag) return null;
+    return { tag, noteCount: notes.value.filter((note) => note.tag === tag.id).length };
+  });
+
+  function requestDeleteTag(id: TagId): void {
+    pendingTagDeletionId.value = id;
+  }
+
+  function confirmDeleteTag(): void {
+    const id = pendingTagDeletionId.value;
+    pendingTagDeletionId.value = null;
+    if (id) deleteTag(id);
+  }
+
+  function cancelDeleteTag(): void {
+    pendingTagDeletionId.value = null;
   }
 
   function deleteTag(id: TagId): void {
@@ -605,7 +626,10 @@ export function useNotesStore({
     closeTags,
     addTag,
     editTag,
-    deleteTag,
+    requestDeleteTag,
+    confirmDeleteTag,
+    cancelDeleteTag,
+    pendingTagDeletion,
     toggleArchive,
     togglePin,
     trashOrDeleteNote,
