@@ -10,6 +10,8 @@ import type { Persistence } from "@/app/persistence";
 import type { FilterId, Note, NoteTag, TagId } from "@/app/types";
 
 const SAVE_RETRY_DELAYS = [2_000, 5_000, 15_000, 30_000];
+const CLOCK_INTERVAL = 30_000;
+const HISTORY_LIMIT = 100;
 
 export function createId(): string {
   return (
@@ -84,9 +86,9 @@ export function createStarterNotes(translate: (key: string) => string): Note[] {
   ];
 }
 
-export function isToday(timestamp: number): boolean {
+export function isToday(timestamp: number, now = Date.now()): boolean {
   const date = new Date(timestamp);
-  const today = new Date();
+  const today = new Date(now);
   return (
     date.getFullYear() === today.getFullYear() &&
     date.getMonth() === today.getMonth() &&
@@ -130,6 +132,9 @@ export function useNotesStore({
   const activeFilter = ref<FilterId>("all");
   const searchQuery = ref("");
   const saved = ref(true);
+  // The app stays open for days in the menu bar: "Today" and relative times
+  // must follow the clock, not only re-renders.
+  const now = ref(Date.now());
   const saveError = ref(false);
   const quitBlocked = ref(false);
   const pendingDeletionId = ref<string | null>(null);
@@ -143,6 +148,7 @@ export function useNotesStore({
   let quitting = false;
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
   let failedSaves = 0;
+  let clockTimer: ReturnType<typeof setInterval> | undefined;
   let removeNewNoteListener: (() => void) | undefined;
   let removeQuitListener: (() => void) | undefined;
   // Notes created in this session and not yet left: discarded if still empty.
@@ -155,7 +161,7 @@ export function useNotesStore({
     if (note.trashed) return false;
     if (activeFilter.value === "archive") return note.archived;
     if (note.archived) return false;
-    if (activeFilter.value === "today") return isToday(note.updatedAt);
+    if (activeFilter.value === "today") return isToday(note.updatedAt, now.value);
     if (activeFilter.value === "pinned") return note.pinned;
     if (activeFilter.value.startsWith("tag:")) return note.tag === activeFilter.value.slice(4);
     return true;
@@ -199,8 +205,9 @@ export function useNotesStore({
 
   const noteCounts = computed(() => ({
     all: notes.value.filter((note) => !note.trashed && !note.archived).length,
-    today: notes.value.filter((note) => !note.trashed && !note.archived && isToday(note.updatedAt))
-      .length,
+    today: notes.value.filter(
+      (note) => !note.trashed && !note.archived && isToday(note.updatedAt, now.value),
+    ).length,
     pinned: notes.value.filter((note) => !note.trashed && !note.archived && note.pinned).length,
     archive: notes.value.filter((note) => !note.trashed && note.archived).length,
     trash: notes.value.filter((note) => note.trashed).length,
@@ -502,7 +509,7 @@ export function useNotesStore({
   }
 
   function formatRelativeTime(timestamp: number): string {
-    const difference = timestamp - Date.now();
+    const difference = timestamp - now.value;
     const absolute = Math.abs(difference);
     if (absolute < 90 * 1000) return translate("time.now");
     const formatter = new Intl.RelativeTimeFormat(locale.value, { numeric: "auto" });
@@ -580,6 +587,9 @@ export function useNotesStore({
     selectedNoteId.value = visibleNotes.value[0]?.id ?? "";
     initialized = true;
     window.addEventListener("keydown", handleKeyboardShortcut);
+    clockTimer = setInterval(() => {
+      now.value = Date.now();
+    }, CLOCK_INTERVAL);
 
     if (nativeRuntime) {
       [removeNewNoteListener, removeQuitListener] = await Promise.all([
@@ -595,6 +605,7 @@ export function useNotesStore({
 
   function dispose(): void {
     disposed = true;
+    if (clockTimer) clearInterval(clockTimer);
     if (saveTimer) clearTimeout(saveTimer);
     if (initialized && !saved.value) void persistNotes().catch(() => undefined);
     removeNewNoteListener?.();
@@ -617,6 +628,7 @@ export function useNotesStore({
       if (!id || history[historyIndex] === id) return;
       history.splice(historyIndex + 1);
       history.push(id);
+      if (history.length > HISTORY_LIMIT) history.splice(0, history.length - HISTORY_LIMIT);
       historyIndex = history.length - 1;
     },
     { flush: "sync" },

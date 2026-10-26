@@ -404,3 +404,34 @@ test("search also matches the name of a note's tag", async () => {
     ["note-1"],
   );
 });
+
+test("Today and relative times follow the clock while the app stays open", async (context) => {
+  context.after(() => mock.timers.reset());
+  mock.timers.enable({
+    apis: ["setInterval", "Date"],
+    now: new Date(2026, 9, 26, 23, 59).getTime(),
+  });
+  const { store } = mountLibrary();
+  await nextTick();
+  const updatedAt = store.selectedNote.value.updatedAt;
+  assert.equal(store.noteCounts.value.today, 1);
+  assert.equal(store.formatRelativeTime(updatedAt), "time.now");
+
+  mock.timers.tick(5 * 60 * 1000);
+  await nextTick();
+  assert.equal(store.noteCounts.value.today, 0);
+  assert.notEqual(store.formatRelativeTime(updatedAt), "time.now");
+});
+
+test("navigation history keeps only the most recent entries", async () => {
+  const { store } = mountLibrary();
+  const first = store.selectedNote.value;
+  store.newNote();
+  store.updateTitle("Seconde");
+  const second = store.selectedNote.value;
+  for (let index = 0; index < 150; index++) store.selectNote(index % 2 ? second : first);
+  const last = store.selectedNote.value;
+  for (let index = 0; index < 120; index++) shortcut("[", { metaKey: true });
+  // 100 kept entries: going back stops 99 steps away, an odd distance.
+  assert.notEqual(store.selectedNote.value.id, last.id);
+});
