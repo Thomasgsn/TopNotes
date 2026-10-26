@@ -442,9 +442,8 @@ export function useNotesStore({
   function restoreNote(): void {
     if (!selectedNote.value) return;
     selectedNote.value.trashed = false;
-    selectedNote.value.archived = false;
     touchSelectedNote();
-    activeFilter.value = "all";
+    activeFilter.value = selectedNote.value.archived ? "archive" : "all";
   }
 
   function trashOrDeleteNote(): void {
@@ -454,9 +453,9 @@ export function useNotesStore({
       pendingDeletionId.value = note.id;
       return;
     }
+    // Trashed notes are hidden from every other view and count, so they keep
+    // their pin and archive state to get it back when restored.
     note.trashed = true;
-    note.archived = false;
-    note.pinned = false;
     note.updatedAt = Date.now();
     markDirty();
   }

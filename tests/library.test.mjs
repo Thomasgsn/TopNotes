@@ -346,3 +346,26 @@ test("emptying the trash removes only trashed notes, after confirmation", async 
   assert.equal(store.noteCounts.value.trash, 0);
   assert.deepEqual(store.visibleNotes.value.map((note) => note.title).sort(), ["Note", "À garder"]);
 });
+
+test("restoring a note from the trash brings back its pin and archive state", async () => {
+  const { store } = mountLibrary();
+  store.togglePin();
+  store.trashOrDeleteNote();
+  store.selectFilter("trash");
+  await nextTick();
+  assert.equal(store.noteCounts.value.pinned, 0);
+  store.restoreNote();
+  await nextTick();
+  assert.equal(store.selectedNote.value.pinned, true);
+  assert.equal(store.activeFilter.value, "all");
+
+  store.toggleArchive();
+  store.trashOrDeleteNote();
+  store.selectFilter("trash");
+  await nextTick();
+  assert.equal(store.noteCounts.value.archive, 0);
+  store.restoreNote();
+  await nextTick();
+  assert.equal(store.selectedNote.value.archived, true);
+  assert.equal(store.activeFilter.value, "archive");
+});
