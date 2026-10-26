@@ -1,0 +1,166 @@
+<script setup lang="ts">
+  import { ref, watch } from "vue";
+  import { useI18n } from "vue-i18n";
+  import SettingsDialog from "./components/dialogs/SettingsDialog.vue";
+  import TagsDialog from "./components/dialogs/TagsDialog.vue";
+  import ShortcutsDialog from "./components/dialogs/ShortcutsDialog.vue";
+  import EditorPanel from "./components/panels/EditorPanel.vue";
+  import NavigationPanel from "./components/panels/NavigationPanel.vue";
+  import NotesPanel from "./components/panels/NotesPanel.vue";
+  import { appPersistence } from "./persistence";
+  import type { PersistedAppData } from "./persistence";
+  import { useNotesStore } from "./stores/notes";
+  import { useNoteWindow } from "./stores/noteWindow";
+  import { useSettingsStore } from "./stores/settings";
+
+  const props = defineProps<{ initialData: PersistedAppData }>();
+  const { t, locale } = useI18n();
+  const notesPanel = ref<InstanceType<typeof NotesPanel> | null>(null);
+  const shortcutsVisible = ref(false);
+  const { detached, busy: noteWindowBusy, detach, attach } = useNoteWindow();
+
+  const notesStore = useNotesStore({
+    initialNotes: props.initialData.notes,
+    initialTags: props.initialData.tags,
+    locale,
+    persistence: appPersistence,
+    translate: (key) => String(t(key)),
+    focusSearch: () => void attach().then(() => notesPanel.value?.focusSearch()),
+    focusTitle: () => document.querySelector<HTMLInputElement>(".editor__title")?.focus(),
+    selectionLocked: detached,
+    openSettings: () => settingsStore.openSettings(),
+    openShortcuts: () => {
+      shortcutsVisible.value = true;
+    },
+  });
+
+  const settingsStore = useSettingsStore({
+    initialSettings: props.initialData.settings,
+    locale,
+    persistence: appPersistence,
+  });
+
+  const {
+    activeFilter,
+    activeFilterTitle,
+    formatRelativeTime,
+    newNote,
+    noteCounts,
+    notePreview,
+    restoreNote,
+    saved,
+    searchQuery,
+    selectFilter,
+    selectedNote,
+    selectedNoteId,
+    selectNote,
+    setSearchQuery,
+    tagCounts,
+    tags,
+    tagName,
+    tagsVisible,
+    openTags,
+    closeTags,
+    addTag,
+    editTag,
+    deleteTag,
+    toggleArchive,
+    togglePin,
+    trashOrDeleteNote,
+    updateBody,
+    updateTag,
+    updateTitle,
+    visibleNotes,
+  } = notesStore;
+
+  const {
+    alwaysOnTop,
+    alwaysOnTopBusy,
+    autostartBusy,
+    autostartEnabled,
+    closeSettings,
+    nativeRuntime,
+    openSettings,
+    setLocale,
+    settingsVisible,
+    toggleAlwaysOnTop,
+    toggleAutostart,
+  } = settingsStore;
+
+  watch(selectedNoteId, () => {
+    if (detached.value) void attach();
+  });
+</script>
+
+<template>
+  <main class="app" :class="{ 'app--detached': detached }" :aria-label="t('app.name')">
+    <NavigationPanel
+      v-if="!detached"
+      :saved="saved"
+      :active-filter="activeFilter"
+      :counts="noteCounts"
+      :tag-counts="tagCounts"
+      :tags="tags"
+      :tag-name="tagName"
+      @select-filter="selectFilter"
+      @open-settings="openSettings"
+      @manage-tags="openTags"
+    />
+    <NotesPanel
+      v-if="!detached"
+      ref="notesPanel"
+      :title="activeFilterTitle"
+      :notes="visibleNotes"
+      :selected-note-id="selectedNoteId"
+      :query="searchQuery"
+      :format-time="formatRelativeTime"
+      :preview="notePreview"
+      :tags="tags"
+      :tag-name="tagName"
+      @select-note="selectNote"
+      @new-note="newNote"
+      @update-query="setSearchQuery"
+    />
+    <EditorPanel
+      :note="selectedNote"
+      :always-on-top="alwaysOnTop"
+      :always-on-top-busy="alwaysOnTopBusy"
+      :detached="detached"
+      :note-window-busy="noteWindowBusy"
+      :tags="tags"
+      :tag-name="tagName"
+      @new-note="newNote"
+      @update-title="updateTitle"
+      @update-body="updateBody"
+      @update-tag="updateTag"
+      @toggle-pin="togglePin"
+      @toggle-archive="toggleArchive"
+      @restore="restoreNote"
+      @trash-or-delete="trashOrDeleteNote"
+      @toggle-always-on-top="toggleAlwaysOnTop"
+      @detach="detach"
+      @attach="attach"
+      @open-shortcuts="shortcutsVisible = true"
+    />
+    <SettingsDialog
+      v-if="settingsVisible"
+      :locale="locale"
+      :native-runtime="nativeRuntime"
+      :autostart-enabled="autostartEnabled"
+      :autostart-busy="autostartBusy"
+      @close="closeSettings"
+      @set-locale="setLocale"
+      @toggle-autostart="toggleAutostart"
+    />
+    <TagsDialog
+      v-if="tagsVisible"
+      :tags="tags"
+      :tag-name="tagName"
+      :add-tag="addTag"
+      :edit-tag="editTag"
+      @delete="deleteTag"
+      @close="closeTags"
+    />
+    <ShortcutsDialog v-if="shortcutsVisible" @close="shortcutsVisible = false" />
+  </main>
+</template>

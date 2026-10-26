@@ -1,0 +1,84 @@
+@use "../variables/colors" as color;
+@use "../variables/fonts" as font;
+
+::selection {
+  color: inherit;
+  background-color: rgba(color.$color-primary, 0.25);
+  text-shadow: none;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  // The UI is dark: declaring `light` made native scrollbars, selects, autofill
+  // and date pickers render light-on-dark.
+  color-scheme: dark;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  font-size: font.$font-size-base;
+  font-family: font.$font-family-pp;
+  font-weight: font.$font-weight-medium;
+  line-height: font.$font-line-height-default;
+  color: color.$color-primary;
+  background-color: transparent;
+  scroll-padding-top: 0;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: 0ms;
+    transition-delay: 0ms;
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  min-width: 860px;
+  display: grid;
+  grid-template-columns: 196px 306px minmax(0, 1fr);
+  overflow: hidden;
+  background: var(--paper);
+  border-radius: 12px;
+  isolation: isolate;
+
+  @media (width <= 980px) {
+    grid-template-columns: 172px 270px minmax(0, 1fr);
+  }
+
+  &--detached {
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+section,
+article,
+aside,
+form {
+  container-type: inline-size;
+}

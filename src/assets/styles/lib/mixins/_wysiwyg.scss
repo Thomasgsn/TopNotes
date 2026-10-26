@@ -1,0 +1,67 @@
+@use "../variables/fonts" as font;
+
+@mixin wysiwyg {
+  font-size: font.$font-size-md;
+  line-height: 1.6;
+
+  > * + * {
+    margin-top: 0.5rem;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+    text-wrap: balance;
+  }
+
+  h1 {
+    font-size: font.$font-size-5xl;
+  }
+
+  h2 {
+    font-size: font.$font-size-4xl;
+  }
+
+  h3 {
+    font-size: font.$font-size-3xl;
+  }
+
+  h4 {
+    font-size: font.$font-size-2xl;
+  }
+
+  h5 {
+    font-size: font.$font-size-xl;
+  }
+
+  h6 {
+    font-size: font.$font-size-lg;
+  }
+
+  p,
+  ul,
+  ol {
+    line-height: 1.6;
+  }
+
+  ul,
+  ol {
+    list-style-position: outside;
+    padding-left: 1.25em;
+  }
+
+  li + li {
+    margin-top: 0.35em;
+  }
+}
+
+// A placeholder emits nothing until extended, so it can live in the token layer
+// and stay reachable from component styles.
+%wysiwyg {
+  @include wysiwyg;
+}
