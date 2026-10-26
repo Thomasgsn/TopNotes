@@ -370,14 +370,19 @@ mod tests {
 
     struct TestDirectory(PathBuf);
 
+    // Tests run in parallel and macOS clocks are only microsecond precise, so a
+    // timestamp alone can give two tests the same directory.
+    static NEXT_DIRECTORY: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
     impl TestDirectory {
         fn new() -> Self {
             let timestamp = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap_or_default()
                 .as_nanos();
+            let index = NEXT_DIRECTORY.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             let path = std::env::temp_dir().join(format!(
-                "topnotes-persistence-test-{}-{timestamp}",
+                "topnotes-persistence-test-{}-{timestamp}-{index}",
                 std::process::id()
             ));
             Self(path)
