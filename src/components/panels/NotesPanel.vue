@@ -19,6 +19,7 @@
     tagName: (tag: NoteTag) => string;
     canEmptyTrash: boolean;
     sortOrder: SortOrder;
+    hint?: string;
   }>();
 
   const emit = defineEmits<{
@@ -145,6 +146,7 @@
       </div>
     </header>
 
+    <p v-if="hint" class="notes__hint">{{ hint }}</p>
     <div v-if="notes.length" class="notes__scroll">
       <button
         v-for="note in notes"
@@ -227,6 +229,15 @@
       font-size: 15px;
       font-weight: 680;
       letter-spacing: -0.01em;
+    }
+
+    &__hint {
+      margin: 0;
+      padding: 9px 18px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.4;
     }
 
     &__sort-spacer {

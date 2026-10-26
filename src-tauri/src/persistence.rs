@@ -49,6 +49,9 @@ pub(crate) struct Note {
     pinned: bool,
     archived: bool,
     trashed: bool,
+    // Added after the first release; absent for notes outside the trash.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    trashed_at: Option<u64>,
     created_at: u64,
     updated_at: u64,
 }
@@ -473,6 +476,7 @@ mod tests {
             pinned: false,
             archived: false,
             trashed: false,
+            trashed_at: None,
             created_at: 1,
             updated_at: 2,
         }];
@@ -596,6 +600,23 @@ mod tests {
         assert!(serde_json::to_string(&chosen)
             .unwrap()
             .contains(r#""sortOrder":"title""#));
+    }
+
+    #[test]
+    fn the_trash_date_is_optional_and_kept() {
+        let note = r#"{"id":"n","title":"","body":"","tag":null,"pinned":false,
+            "archived":false,"trashed":true,"createdAt":1,"updatedAt":2"#;
+        let legacy: Note = serde_json::from_str(&format!("{note}}}")).unwrap();
+        assert_eq!(legacy.trashed_at, None);
+        assert!(!serde_json::to_string(&legacy)
+            .unwrap()
+            .contains("trashedAt"));
+
+        let dated: Note = serde_json::from_str(&format!(r#"{note},"trashedAt":3}}"#)).unwrap();
+        assert_eq!(dated.trashed_at, Some(3));
+        assert!(serde_json::to_string(&dated)
+            .unwrap()
+            .contains(r#""trashedAt":3"#));
     }
 
     #[test]

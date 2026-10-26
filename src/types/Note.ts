@@ -9,6 +9,8 @@ export interface Note {
   pinned: boolean;
   archived: boolean;
   trashed: boolean;
+  // When the note was moved to the trash; optional in stored data.
+  trashedAt?: number;
   createdAt: number;
   updatedAt: number;
 }

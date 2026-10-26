@@ -69,6 +69,7 @@ export function isPersistedNote(value: unknown): value is Note {
     typeof candidate.pinned === "boolean" &&
     typeof candidate.archived === "boolean" &&
     typeof candidate.trashed === "boolean" &&
+    (candidate.trashedAt === undefined || typeof candidate.trashedAt === "number") &&
     typeof candidate.createdAt === "number" &&
     typeof candidate.updatedAt === "number"
   );

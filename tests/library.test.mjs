@@ -514,3 +514,45 @@ test("notes can be sorted by modification date, creation date or title", async (
   sortOrder.value = "title";
   assert.deepEqual(ids(), ["p", "a", "b", "c"]);
 });
+
+test("notes in the trash for more than 30 days are purged", async (context) => {
+  context.after(() => mock.timers.reset());
+  const day = 24 * 60 * 60 * 1000;
+  const start = new Date(2026, 9, 1, 12).getTime();
+  mock.timers.enable({ apis: ["setTimeout", "setInterval", "Date"], now: start });
+  const legacyTrashed = {
+    id: "legacy",
+    title: "Déjà jetée",
+    body: "",
+    bodyFormat: "markdown",
+    tag: null,
+    pinned: false,
+    archived: false,
+    trashed: true,
+    createdAt: 1,
+    updatedAt: 1,
+  };
+  const { store } = mountLibrary({
+    initialNotes: [
+      { ...legacyTrashed, id: "note-1", title: "Note", trashed: false },
+      legacyTrashed,
+      { ...legacyTrashed, id: "old", trashedAt: start - 31 * day },
+    ],
+  });
+  await nextTick();
+  const ids = () => store.notes.value.map((note) => note.id).sort();
+  assert.deepEqual(ids(), ["legacy", "note-1"]);
+  assert.equal(store.notes.value.find((note) => note.id === "legacy").trashedAt, start);
+
+  store.trashOrDeleteNote();
+  assert.equal(store.notes.value.find((note) => note.id === "note-1").trashedAt, start);
+  store.undo();
+  assert.equal(store.notes.value.find((note) => note.id === "note-1").trashedAt, undefined);
+
+  mock.timers.tick(29 * day);
+  await nextTick();
+  assert.deepEqual(ids(), ["legacy", "note-1"]);
+  mock.timers.tick(2 * day);
+  await nextTick();
+  assert.deepEqual(ids(), ["note-1"]);
+});

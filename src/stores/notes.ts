@@ -13,6 +13,8 @@ const SAVE_RETRY_DELAYS = [2_000, 5_000, 15_000, 30_000];
 const CLOCK_INTERVAL = 30_000;
 const HISTORY_LIMIT = 100;
 const UNDO_DURATION = 8_000;
+export const TRASH_RETENTION_DAYS = 30;
+const TRASH_RETENTION = TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
 
 export interface Undoable {
   message: string;
@@ -529,6 +531,7 @@ export function useNotesStore({
   function restoreNote(): void {
     if (!selectedNote.value) return;
     selectedNote.value.trashed = false;
+    delete selectedNote.value.trashedAt;
     touchSelectedNote();
     activeFilter.value = selectedNote.value.archived ? "archive" : "all";
   }
@@ -545,10 +548,12 @@ export function useNotesStore({
     const previousUpdatedAt = note.updatedAt;
     note.trashed = true;
     note.updatedAt = Date.now();
+    note.trashedAt = note.updatedAt;
     offerUndo("undo.trashed", () => {
       const current = notes.value.find((candidate) => candidate.id === note.id);
       if (!current) return;
       current.trashed = false;
+      delete current.trashedAt;
       current.updatedAt = previousUpdatedAt;
     });
     markDirty();
@@ -566,6 +571,15 @@ export function useNotesStore({
 
   function cancelDelete(): void {
     pendingDeletionId.value = null;
+  }
+
+  function purgeExpiredTrash(): void {
+    const limit = Date.now() - TRASH_RETENTION;
+    const expired = (note: Note) =>
+      note.trashed && note.trashedAt !== undefined && note.trashedAt < limit;
+    if (!notes.value.some(expired)) return;
+    notes.value = notes.value.filter((note) => !expired(note));
+    markDirty();
   }
 
   function requestEmptyTrash(): void {
@@ -663,8 +677,18 @@ export function useNotesStore({
     selectedNoteId.value = visibleNotes.value[0]?.id ?? "";
     initialized = true;
     window.addEventListener("keydown", handleKeyboardShortcut);
+    // Notes trashed before trash dates existed get the 30 days from today.
+    let datedTrash = false;
+    for (const note of notes.value) {
+      if (!note.trashed || note.trashedAt !== undefined) continue;
+      note.trashedAt = Date.now();
+      datedTrash = true;
+    }
+    if (datedTrash) markDirty();
+    purgeExpiredTrash();
     clockTimer = setInterval(() => {
       now.value = Date.now();
+      purgeExpiredTrash();
     }, CLOCK_INTERVAL);
 
     if (nativeRuntime) {

@@ -55,6 +55,8 @@ const messages = {
       characters: "{count} caractères",
       noNotes: "Aucune note ici",
       noNotesHint: "Créez une note ou choisissez une autre section.",
+      trashRetention:
+        "Les notes sont supprimées définitivement après {days} jours dans la corbeille.",
       loadFailedTitle: "TopNotes n’a pas pu lire vos notes",
       loadFailedHelp:
         "Vos données n’ont pas été modifiées. Elles ont peut-être été créées par une version plus récente de TopNotes : mettez l’application à jour, puis relancez-la.",
@@ -168,6 +170,7 @@ const messages = {
       characters: "{count} characters",
       noNotes: "No notes here",
       noNotesHint: "Create a note or choose another section.",
+      trashRetention: "Notes are permanently deleted after {days} days in the Trash.",
       loadFailedTitle: "TopNotes could not read your notes",
       loadFailedHelp:
         "Your data has not been changed. It may have been created by a newer version of TopNotes: update the app, then open it again.",
@@ -275,6 +278,7 @@ const messages = {
       characters: "{count} caratteri",
       noNotes: "Nessuna nota qui",
       noNotesHint: "Crea una nota o scegli un’altra sezione.",
+      trashRetention: "Le note vengono eliminate definitivamente dopo {days} giorni nel cestino.",
       loadFailedTitle: "TopNotes non è riuscito a leggere le tue note",
       loadFailedHelp:
         "I tuoi dati non sono stati modificati. Potrebbero essere stati creati da una versione più recente di TopNotes: aggiorna l’app e riaprila.",
@@ -381,6 +385,7 @@ const messages = {
       characters: "{count} caracteres",
       noNotes: "No hay notas aquí",
       noNotesHint: "Crea una nota o elige otra sección.",
+      trashRetention: "Las notas se eliminan definitivamente tras {days} días en la papelera.",
       loadFailedTitle: "TopNotes no ha podido leer tus notas",
       loadFailedHelp:
         "Tus datos no se han modificado. Puede que los haya creado una versión más reciente de TopNotes: actualiza la aplicación y vuelve a abrirla.",
@@ -486,6 +491,7 @@ const messages = {
       characters: "{count} Zeichen",
       noNotes: "Hier sind keine Notizen",
       noNotesHint: "Erstelle eine Notiz oder wähle einen anderen Bereich.",
+      trashRetention: "Notizen werden nach {days} Tagen im Papierkorb endgültig gelöscht.",
       loadFailedTitle: "TopNotes konnte deine Notizen nicht lesen",
       loadFailedHelp:
         "Deine Daten wurden nicht verändert. Sie wurden möglicherweise von einer neueren TopNotes-Version erstellt: Aktualisiere die App und öffne sie erneut.",

@@ -13,7 +13,7 @@
   import NotesPanel from "./components/panels/NotesPanel.vue";
   import { appPersistence } from "./persistence";
   import type { PersistedAppData } from "./persistence";
-  import { useNotesStore } from "./stores/notes";
+  import { TRASH_RETENTION_DAYS, useNotesStore } from "./stores/notes";
   import { useNoteWindow } from "./stores/noteWindow";
   import { useSettingsStore } from "./stores/settings";
 
@@ -155,6 +155,9 @@
       :tag-name="tagName"
       :can-empty-trash="activeFilter === 'trash' && noteCounts.trash > 0"
       :sort-order="sortOrder"
+      :hint="
+        activeFilter === 'trash' ? t('app.trashRetention', { days: TRASH_RETENTION_DAYS }) : ''
+      "
       @select-note="selectNote"
       @new-note="newNote"
       @update-query="setSearchQuery"
