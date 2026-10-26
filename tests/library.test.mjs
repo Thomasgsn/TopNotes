@@ -369,3 +369,26 @@ test("restoring a note from the trash brings back its pin and archive state", as
   assert.equal(store.selectedNote.value.archived, true);
   assert.equal(store.activeFilter.value, "archive");
 });
+
+test("a new note left empty is discarded when another note is selected", async () => {
+  const { store } = mountLibrary();
+  const existing = store.selectedNote.value;
+  store.newNote();
+  await nextTick();
+  assert.equal(store.visibleNotes.value.length, 2);
+  store.selectNote(existing);
+  await nextTick();
+  assert.equal(store.visibleNotes.value.length, 1);
+
+  store.newNote();
+  store.updateTitle("Gardée");
+  store.selectNote(existing);
+  await nextTick();
+  assert.equal(store.visibleNotes.value.length, 2);
+
+  store.newNote();
+  store.updateBody("Un contenu");
+  store.newNote();
+  await nextTick();
+  assert.equal(store.visibleNotes.value.length, 4);
+});

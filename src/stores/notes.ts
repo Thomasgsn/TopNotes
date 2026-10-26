@@ -145,6 +145,8 @@ export function useNotesStore({
   let failedSaves = 0;
   let removeNewNoteListener: (() => void) | undefined;
   let removeQuitListener: (() => void) | undefined;
+  // Notes created in this session and not yet left: discarded if still empty.
+  const draftNoteIds = new Set<string>();
   const history: string[] = [];
   let historyIndex = -1;
 
@@ -383,11 +385,20 @@ export function useNotesStore({
       updatedAt: now,
     };
     notes.value.unshift(note);
+    draftNoteIds.add(note.id);
     activeFilter.value = "all";
     searchQuery.value = "";
     selectedNoteId.value = note.id;
     markDirty();
     void nextTick(focusTitle);
+  }
+
+  function discardEmptyDraft(id: string): void {
+    if (!draftNoteIds.delete(id)) return;
+    const note = notes.value.find((candidate) => candidate.id === id);
+    if (!note || note.title.trim() || noteText(note)) return;
+    notes.value = notes.value.filter((candidate) => candidate.id !== id);
+    markDirty();
   }
 
   function touchSelectedNote(): Note | null {
@@ -593,6 +604,8 @@ export function useNotesStore({
       selectedNoteId.value = currentNotes[0]?.id ?? "";
     }
   });
+
+  watch(selectedNoteId, (_id, previousId) => discardEmptyDraft(previousId), { flush: "sync" });
 
   watch(
     selectedNoteId,
