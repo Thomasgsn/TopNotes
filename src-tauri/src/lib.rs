@@ -6,6 +6,7 @@ use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Emitter, Manager, Runtime, WindowEvent,
 };
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 const TRAY_ID: &str = "topnotes";
 const MAIN_WINDOW: &str = "main";
@@ -80,6 +81,12 @@ fn toggle_main_window<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     Ok(())
 }
 
+/// Shows or hides TopNotes from any application (shown in the shortcuts dialog
+/// as Mod-Alt-n).
+fn toggle_window_shortcut() -> Shortcut {
+    Shortcut::new(Some(Modifiers::ALT | Modifiers::SUPER), Code::KeyN)
+}
+
 #[tauri::command]
 fn set_always_on_top(app: AppHandle, enabled: bool) -> Result<bool, String> {
     let window = app
@@ -120,6 +127,7 @@ pub fn run() {
             let _ = show_main_window(app);
         }))
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec!["--hidden"]),
@@ -171,6 +179,18 @@ pub fn run() {
 
             tray.build(app)?;
 
+            // Another application may already own the shortcut: keep running without it.
+            if let Err(error) = app.global_shortcut().on_shortcut(
+                toggle_window_shortcut(),
+                |app, _shortcut, event| {
+                    if event.state == ShortcutState::Pressed {
+                        let _ = toggle_main_window(app);
+                    }
+                },
+            ) {
+                eprintln!("TopNotes could not register its global shortcut: {error}");
+            }
+
             for window in app.webview_windows().values() {
                 window.set_always_on_top(true)?;
             }
@@ -200,4 +220,15 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running TopNotes");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_global_shortcut_is_option_command_n() {
+        let expected: Shortcut = "alt+super+KeyN".parse().unwrap();
+        assert_eq!(toggle_window_shortcut(), expected);
+    }
 }

@@ -122,6 +122,8 @@ export const editorShortcuts = [
 ];
 
 export const navigationShortcuts = [
+  // Registered globally by the native app (src-tauri/src/lib.rs).
+  { id: "toggleWindow", key: "Mod-Alt-n" },
   { id: "newNote", key: "Mod-n" },
   { id: "search", key: "Mod-k" },
   { id: "search", key: "Mod-f" },
