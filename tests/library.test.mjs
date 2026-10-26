@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { afterEach, beforeEach, test } from "node:test";
+import { afterEach, beforeEach, mock, test } from "node:test";
 import { createRenderer, nextTick, ref } from "vue";
 import { useNotesStore } from "../src/stores/notes.ts";
 import { defaultTags } from "../src/tags.ts";
@@ -25,7 +25,7 @@ afterEach(async () => {
   delete globalThis.isTauri;
 });
 
-function mountLibrary() {
+function mountLibrary(overrides = {}) {
   let store;
   const snapshots = [];
   const calls = { search: 0, settings: 0, shortcuts: 0 };
@@ -66,6 +66,7 @@ function mountLibrary() {
         openShortcuts: () => {
           calls.shortcuts++;
         },
+        ...overrides,
       });
       return () => null;
     },
@@ -197,4 +198,55 @@ test("deleting a trashed note permanently waits for confirmation", async () => {
   await nextTick();
   assert.equal(store.pendingDeletion.value, null);
   assert.equal(store.visibleNotes.value.length, 0);
+});
+
+function flushPromises() {
+  return new Promise((resolve) => setImmediate(resolve));
+}
+
+test("a failed save is reported and retried until it succeeds", async (context) => {
+  context.after(() => mock.timers.reset());
+  mock.timers.enable({ apis: ["setTimeout"] });
+  let failures = 1;
+  const writes = [];
+  const { store } = mountLibrary({
+    persistence: {
+      saveNotes: async (notes) => {
+        if (failures-- > 0) throw new Error("disk full");
+        writes.push(structuredClone(notes));
+      },
+    },
+  });
+  store.updateTitle("Important");
+  mock.timers.tick(320);
+  await flushPromises();
+  assert.equal(store.saved.value, false);
+  assert.equal(store.saveError.value, true);
+  assert.equal(writes.length, 0);
+
+  mock.timers.tick(2000);
+  await flushPromises();
+  assert.equal(store.saved.value, true);
+  assert.equal(store.saveError.value, false);
+  assert.equal(writes.at(-1)[0].title, "Important");
+});
+
+test("quitting reports a failed save instead of silently staying open", async () => {
+  let quits = 0;
+  const { store } = mountLibrary({
+    persistence: {
+      saveNotes: async () => {
+        throw new Error("read-only volume");
+      },
+    },
+    quitApp: async () => {
+      quits++;
+    },
+  });
+  await store.requestQuit();
+  assert.equal(quits, 0);
+  assert.equal(store.quitBlocked.value, true);
+
+  await store.forceQuit();
+  assert.equal(quits, 1);
 });

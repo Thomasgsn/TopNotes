@@ -9,6 +9,8 @@ import type { TagError } from "@/app/tags";
 import type { Persistence } from "@/app/persistence";
 import type { FilterId, Note, NoteTag, TagId } from "@/app/types";
 
+const SAVE_RETRY_DELAYS = [2_000, 5_000, 15_000, 30_000];
+
 export function createId(): string {
   return (
     globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`
@@ -100,6 +102,7 @@ interface NotesStoreOptions {
   selectionLocked?: Readonly<Ref<boolean>>;
   openSettings?: () => void;
   openShortcuts?: () => void;
+  quitApp?: () => Promise<void>;
 }
 
 export function useNotesStore({
@@ -113,6 +116,7 @@ export function useNotesStore({
   selectionLocked = ref(false),
   openSettings = () => {},
   openShortcuts = () => {},
+  quitApp = () => invoke("quit_app"),
 }: NotesStoreOptions) {
   const notes = ref<Note[]>([]);
   const tags = ref<NoteTag[]>(initialTags ?? defaultTags());
@@ -121,13 +125,17 @@ export function useNotesStore({
   const activeFilter = ref<FilterId>("all");
   const searchQuery = ref("");
   const saved = ref(true);
+  const saveError = ref(false);
+  const quitBlocked = ref(false);
   const pendingDeletionId = ref<string | null>(null);
   const nativeRuntime = isTauri();
 
   let initialized = false;
+  let disposed = false;
   let revision = 0;
   let quitting = false;
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
+  let failedSaves = 0;
   let removeNewNoteListener: (() => void) | undefined;
   let removeQuitListener: (() => void) | undefined;
   const history: string[] = [];
@@ -247,12 +255,49 @@ export function useNotesStore({
         snapshot,
         tags.value.map((tag) => ({ ...tag })),
       );
+      failedSaves = 0;
+      saveError.value = false;
       if (persistedRevision === revision) saved.value = true;
     } catch (error) {
       saved.value = false;
+      saveError.value = true;
       console.error("TopNotes could not save notes.", error);
+      scheduleRetry();
       throw error;
     }
+  }
+
+  function scheduleRetry(): void {
+    if (saveTimer || disposed) return;
+    const delay = SAVE_RETRY_DELAYS[Math.min(failedSaves, SAVE_RETRY_DELAYS.length - 1)];
+    failedSaves += 1;
+    saveTimer = setTimeout(() => void persistNotes().catch(() => undefined), delay);
+  }
+
+  function retrySave(): void {
+    void persistNotes().catch(() => undefined);
+  }
+
+  async function requestQuit(): Promise<void> {
+    if (quitting) return;
+    quitting = true;
+    try {
+      await persistNotes();
+    } catch {
+      quitting = false;
+      quitBlocked.value = true;
+      return;
+    }
+    await quitApp();
+  }
+
+  async function forceQuit(): Promise<void> {
+    quitBlocked.value = false;
+    await quitApp();
+  }
+
+  function cancelQuit(): void {
+    quitBlocked.value = false;
   }
 
   function markDirty(): void {
@@ -474,15 +519,9 @@ export function useNotesStore({
     if (nativeRuntime) {
       [removeNewNoteListener, removeQuitListener] = await Promise.all([
         listen("topnotes://new-note", newNote).catch(() => undefined),
-        listen("topnotes://quit-requested", () => {
-          if (quitting) return;
-          quitting = true;
-          void persistNotes()
-            .then(() => invoke("quit_app"))
-            .catch(() => {
-              quitting = false;
-            });
-        }).catch(() => undefined),
+        listen("topnotes://quit-requested", () => void requestQuit().catch(() => undefined)).catch(
+          () => undefined,
+        ),
       ]);
     }
 
@@ -490,6 +529,7 @@ export function useNotesStore({
   }
 
   function dispose(): void {
+    disposed = true;
     if (saveTimer) clearTimeout(saveTimer);
     if (initialized && !saved.value) void persistNotes().catch(() => undefined);
     removeNewNoteListener?.();
@@ -522,13 +562,19 @@ export function useNotesStore({
     activeFilter: readonly(activeFilter),
     activeFilterTitle,
     cancelDelete,
+    cancelQuit,
     confirmDelete,
+    forceQuit,
     formatRelativeTime,
     newNote,
     noteCounts,
     notePreview,
     pendingDeletion,
+    quitBlocked: readonly(quitBlocked),
+    requestQuit,
+    retrySave,
     saved: readonly(saved),
+    saveError: readonly(saveError),
     searchQuery: readonly(searchQuery),
     selectFilter,
     selectedNote,

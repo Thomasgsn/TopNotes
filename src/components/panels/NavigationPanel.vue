@@ -3,6 +3,7 @@
     Archive,
     CalendarDays,
     Check,
+    CircleAlert,
     NotebookTabs,
     Pin,
     Pencil,
@@ -16,6 +17,7 @@
 
   defineProps<{
     saved: boolean;
+    saveError: boolean;
     activeFilter: FilterId;
     counts: Record<"all" | "today" | "pinned" | "archive" | "trash", number>;
     tagCounts: Record<TagId, number>;
@@ -27,6 +29,7 @@
     selectFilter: [filter: FilterId];
     openSettings: [];
     manageTags: [];
+    retrySave: [];
   }>();
 
   const { t } = useI18n();
@@ -167,11 +170,25 @@
     </div>
 
     <!-- TODO: may be update  in future version if we are able to connect a db -->
-    <footer :class="[`navigation__footer`, { [`navigation__footer--saved`]: saved }]">
-      <Check v-if="saved" :size="12" />
-      <span class="navigation__footer-label">
-        {{ saved ? t("app.saved") : t("app.saving") }}
-      </span>
+    <footer
+      :class="[
+        `navigation__footer`,
+        { [`navigation__footer--saved`]: saved, [`navigation__footer--error`]: saveError },
+      ]"
+    >
+      <template v-if="saveError">
+        <CircleAlert :size="12" />
+        <span class="navigation__footer-label" role="alert">{{ t("app.saveFailed") }}</span>
+        <button class="navigation__retry" type="button" @click="emit('retrySave')">
+          {{ t("app.retry") }}
+        </button>
+      </template>
+      <template v-else>
+        <Check v-if="saved" :size="12" />
+        <span class="navigation__footer-label">
+          {{ saved ? t("app.saved") : t("app.saving") }}
+        </span>
+      </template>
     </footer>
   </aside>
 </template>
@@ -307,6 +324,25 @@
 
       &--saving {
         color: var(--saved);
+      }
+
+      &--error {
+        color: #e0807c;
+      }
+    }
+
+    &__retry {
+      margin-left: auto;
+      padding: 3px 7px;
+      border-radius: 5px;
+      color: inherit;
+      background: rgb(255 255 255 / 8%);
+      cursor: pointer;
+      font: inherit;
+      -webkit-app-region: no-drag;
+
+      &:hover {
+        background: rgb(255 255 255 / 14%);
       }
     }
 

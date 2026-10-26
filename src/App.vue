@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { isTauri } from "@tauri-apps/api/core";
+  import { getCurrentWindow } from "@tauri-apps/api/window";
   import { ref, watch } from "vue";
   import { useI18n } from "vue-i18n";
   import SettingsDialog from "./components/dialogs/SettingsDialog.vue";
@@ -45,14 +47,19 @@
     activeFilter,
     activeFilterTitle,
     cancelDelete,
+    cancelQuit,
     confirmDelete,
+    forceQuit,
     formatRelativeTime,
     newNote,
     noteCounts,
     notePreview,
     pendingDeletion,
+    quitBlocked,
     restoreNote,
+    retrySave,
     saved,
+    saveError,
     searchQuery,
     selectFilter,
     selectedNote,
@@ -94,6 +101,15 @@
   watch(selectedNoteId, () => {
     if (detached.value) void attach();
   });
+
+  // Quitting from the tray can fail while the window is hidden: bring it back so the
+  // unsaved-changes prompt is actually seen.
+  watch(quitBlocked, async (blocked) => {
+    if (!blocked || !isTauri()) return;
+    const appWindow = getCurrentWindow();
+    await appWindow.show().catch(() => undefined);
+    await appWindow.setFocus().catch(() => undefined);
+  });
 </script>
 
 <template>
@@ -101,6 +117,7 @@
     <NavigationPanel
       v-if="!detached"
       :saved="saved"
+      :save-error="saveError"
       :active-filter="activeFilter"
       :counts="noteCounts"
       :tag-counts="tagCounts"
@@ -109,6 +126,7 @@
       @select-filter="selectFilter"
       @open-settings="openSettings"
       @manage-tags="openTags"
+      @retry-save="retrySave"
     />
     <NotesPanel
       v-if="!detached"
@@ -175,6 +193,14 @@
       :confirm-label="t('confirm.deleteNote')"
       @confirm="confirmDelete"
       @cancel="cancelDelete"
+    />
+    <ConfirmDialog
+      v-if="quitBlocked"
+      :title="t('confirm.quitUnsavedTitle')"
+      :message="t('confirm.quitUnsavedMessage')"
+      :confirm-label="t('confirm.quitUnsaved')"
+      @confirm="forceQuit"
+      @cancel="cancelQuit"
     />
   </main>
 </template>
