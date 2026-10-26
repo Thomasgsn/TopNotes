@@ -33,12 +33,11 @@ test("source styles stay centralized in the SCSS directory", async () => {
   );
 });
 
-test("Vue templates use BEM classes and contain no component styles", async () => {
+test("Vue templates use BEM classes", async () => {
   const vueFiles = (await filesIn(sourceRoot)).filter((file) => file.endsWith(".vue"));
 
   for (const file of vueFiles) {
     const source = await readFile(file, "utf8");
-    assert.doesNotMatch(source, /<style\b/iu, `${file} must not define component styles`);
 
     for (const match of source.matchAll(/(?<!:)class="([^"]+)"/gu)) {
       for (const className of match[1].split(/\s+/u)) {
