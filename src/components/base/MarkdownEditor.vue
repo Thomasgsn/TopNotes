@@ -10,7 +10,11 @@
     bodyFormat?: "markdown";
     placeholder: string;
   }>();
-  const emit = defineEmits<{ update: [markdown: string]; editLink: [draft: LinkDraft] }>();
+  const emit = defineEmits<{
+    update: [markdown: string];
+    convert: [markdown: string];
+    editLink: [draft: LinkDraft];
+  }>();
 
   const editor = useEditor({
     extensions: markdownExtensions({ openLink }),
@@ -26,7 +30,7 @@
       },
     },
     onCreate: ({ editor: current }) => {
-      if (props.bodyFormat !== "markdown") emit("update", current.getMarkdown());
+      if (props.bodyFormat !== "markdown") emit("convert", current.getMarkdown());
     },
     onUpdate: ({ editor: current }) => emit("update", current.getMarkdown()),
   });

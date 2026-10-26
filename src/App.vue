@@ -49,6 +49,7 @@
     cancelDelete,
     cancelQuit,
     confirmDelete,
+    convertLegacyBody,
     forceQuit,
     formatRelativeTime,
     newNote,
@@ -154,6 +155,7 @@
       @new-note="newNote"
       @update-title="updateTitle"
       @update-body="updateBody"
+      @convert-body="convertLegacyBody"
       @update-tag="updateTag"
       @toggle-pin="togglePin"
       @toggle-archive="toggleArchive"

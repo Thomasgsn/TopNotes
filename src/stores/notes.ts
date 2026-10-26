@@ -25,6 +25,7 @@ export function createStarterNotes(translate: (key: string) => string): Note[] {
       id: createId(),
       title: translate("starter.planningTitle"),
       body: translate("starter.planningBody"),
+      bodyFormat: "markdown",
       tag: "work",
       pinned: true,
       archived: false,
@@ -36,6 +37,7 @@ export function createStarterNotes(translate: (key: string) => string): Note[] {
       id: createId(),
       title: translate("starter.weekendTitle"),
       body: translate("starter.weekendBody"),
+      bodyFormat: "markdown",
       tag: "personal",
       pinned: false,
       archived: false,
@@ -47,6 +49,7 @@ export function createStarterNotes(translate: (key: string) => string): Note[] {
       id: createId(),
       title: translate("starter.meetingTitle"),
       body: translate("starter.meetingBody"),
+      bodyFormat: "markdown",
       tag: "work",
       pinned: false,
       archived: false,
@@ -58,6 +61,7 @@ export function createStarterNotes(translate: (key: string) => string): Note[] {
       id: createId(),
       title: translate("starter.booksTitle"),
       body: translate("starter.booksBody"),
+      bodyFormat: "markdown",
       tag: "ideas",
       pinned: false,
       archived: false,
@@ -69,6 +73,7 @@ export function createStarterNotes(translate: (key: string) => string): Note[] {
       id: createId(),
       title: translate("starter.shoppingTitle"),
       body: translate("starter.shoppingBody"),
+      bodyFormat: "markdown",
       tag: "personal",
       pinned: false,
       archived: false,
@@ -383,6 +388,16 @@ export function useNotesStore({
     touchSelectedNote();
   }
 
+  // Converting a legacy HTML body is a storage migration, not a user edit:
+  // keep updatedAt so the note does not jump to the top or into "Today".
+  function convertLegacyBody(body: string): void {
+    const note = selectedNote.value;
+    if (!note || note.bodyFormat === "markdown") return;
+    note.body = body;
+    note.bodyFormat = "markdown";
+    markDirty();
+  }
+
   function updateTag(tag: TagId | null): void {
     if (!selectedNote.value) return;
     selectedNote.value.tag = tags.value.some((candidate) => candidate.id === tag) ? tag : null;
@@ -564,6 +579,7 @@ export function useNotesStore({
     cancelDelete,
     cancelQuit,
     confirmDelete,
+    convertLegacyBody,
     forceQuit,
     formatRelativeTime,
     newNote,

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, mock, test } from "node:test";
 import { createRenderer, nextTick, ref } from "vue";
-import { useNotesStore } from "../src/stores/notes.ts";
+import { createStarterNotes, useNotesStore } from "../src/stores/notes.ts";
+import { i18n, supportedLocales } from "../src/i18n.ts";
 import { defaultTags } from "../src/tags.ts";
 
 const renderer = createRenderer({
@@ -249,4 +250,51 @@ test("quitting reports a failed save instead of silently staying open", async ()
 
   await store.forceQuit();
   assert.equal(quits, 1);
+});
+
+test("converting a legacy HTML note on open keeps its modification date and position", async (context) => {
+  context.after(() => mock.timers.reset());
+  mock.timers.enable({ apis: ["setTimeout"] });
+  const writes = [];
+  const legacy = {
+    id: "legacy",
+    title: "Ancienne",
+    body: "<p>Texte</p>",
+    tag: null,
+    pinned: false,
+    archived: false,
+    trashed: false,
+    createdAt: 1,
+    updatedAt: 5,
+  };
+  const recent = { ...legacy, id: "recent", title: "Récente", updatedAt: 10 };
+  const { store } = mountLibrary({
+    initialNotes: [recent, legacy],
+    persistence: { saveNotes: async (notes) => writes.push(structuredClone(notes)) },
+  });
+  await nextTick();
+  store.selectNote(store.visibleNotes.value[1]);
+  store.convertLegacyBody("Texte");
+  await nextTick();
+  assert.equal(store.selectedNote.value.bodyFormat, "markdown");
+  assert.equal(store.selectedNote.value.body, "Texte");
+  assert.equal(store.selectedNote.value.updatedAt, 5);
+  assert.deepEqual(
+    store.visibleNotes.value.map((note) => note.id),
+    ["recent", "legacy"],
+  );
+
+  mock.timers.tick(320);
+  await flushPromises();
+  assert.equal(writes.at(-1).find((note) => note.id === "legacy").bodyFormat, "markdown");
+});
+
+test("starter notes are stored as Markdown in every language", () => {
+  for (const locale of supportedLocales) {
+    i18n.global.locale.value = locale;
+    for (const note of createStarterNotes((key) => String(i18n.global.t(key)))) {
+      assert.equal(note.bodyFormat, "markdown", `${locale}: ${note.title}`);
+      assert.doesNotMatch(note.body, /<\/?[a-z]+>/, `${locale}: ${note.title}`);
+    }
+  }
 });

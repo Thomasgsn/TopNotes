@@ -44,6 +44,7 @@
     newNote: [];
     updateTitle: [title: string];
     updateBody: [body: string];
+    convertBody: [body: string];
     updateTag: [tag: TagId | null];
     togglePin: [];
     toggleArchive: [];
@@ -313,6 +314,7 @@
             :body-format="note.bodyFormat"
             :placeholder="t('app.startWriting')"
             @update="emit('updateBody', $event)"
+            @convert="emit('convertBody', $event)"
             @edit-link="linkDraft = $event"
           />
         </div>

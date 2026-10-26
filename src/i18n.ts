@@ -1,7 +1,7 @@
 import { createI18n } from "vue-i18n";
-import { tagMessages } from "./tagMessages";
-import { editorMessages } from "./editorMessages";
-import { confirmMessages } from "./confirmMessages";
+import { tagMessages } from "./tagMessages.ts";
+import { editorMessages } from "./editorMessages.ts";
+import { confirmMessages } from "./confirmMessages.ts";
 
 export const supportedLocales = ["fr", "en", "it", "es", "de"] as const;
 
@@ -110,17 +110,16 @@ const messages = {
       planningPreview:
         "Priorités, rendez-vous et petites choses à ne pas oublier pour bien commencer le mois.",
       planningBody:
-        "<p>Le mois prochain doit rester simple : avancer sur les sujets importants, garder du temps pour réfléchir et éviter de surcharger les journées.</p><p><strong>Objectif principal :</strong> finaliser la première version de TopNotes et la partager avec quelques utilisateurs.</p><ul><li>Valider la navigation et les raccourcis clavier</li><li>Relire les cinq traductions</li><li>Tester le lancement automatique au démarrage du Mac</li><li>Vérifier que chaque fenêtre reste toujours au premier plan</li></ul><p>Garder une marge le vendredi après-midi pour les retours et les petits ajustements.</p>",
+        "Le mois prochain doit rester simple : avancer sur les sujets importants, garder du temps pour réfléchir et éviter de surcharger les journées.\n\n**Objectif principal :** finaliser la première version de TopNotes et la partager avec quelques utilisateurs.\n\n- Valider la navigation et les raccourcis clavier\n- Relire les cinq traductions\n- Tester le lancement automatique au démarrage du Mac\n- Vérifier que chaque fenêtre reste toujours au premier plan\n\nGarder une marge le vendredi après-midi pour les retours et les petits ajustements.",
       weekendTitle: "Idées pour le week-end",
-      weekendBody: "<p>Marché le matin, balade au bord du lac et dîner avec Léa samedi soir.</p>",
+      weekendBody: "Marché le matin, balade au bord du lac et dîner avec Léa samedi soir.",
       meetingTitle: "Retour réunion produit",
       meetingBody:
-        "<p>Simplifier l’onboarding et vérifier les traductions allemandes avant la prochaine version.</p>",
+        "Simplifier l’onboarding et vérifier les traductions allemandes avant la prochaine version.",
       booksTitle: "Livres à lire",
-      booksBody:
-        "<p>Une courte sélection pour l’automne : essais, fiction et design de produits.</p>",
+      booksBody: "Une courte sélection pour l’automne : essais, fiction et design de produits.",
       shoppingTitle: "Courses",
-      shoppingBody: "<p>Café, pain, tomates, basilic, lait d’avoine et savon.</p>",
+      shoppingBody: "Café, pain, tomates, basilic, lait d’avoine et savon.",
     },
   },
   en: {
@@ -205,17 +204,17 @@ const messages = {
       planningPreview:
         "Priorities, appointments and small things to remember for a smooth start to the month.",
       planningBody:
-        "<p>Next month should stay simple: make progress on what matters, leave time to think, and avoid overloading each day.</p><p><strong>Main goal:</strong> finish the first TopNotes release and share it with a few users.</p><ul><li>Validate navigation and keyboard shortcuts</li><li>Review all five translations</li><li>Test launch at login on macOS</li><li>Verify every window remains always on top</li></ul><p>Keep Friday afternoons free for feedback and small adjustments.</p>",
+        "Next month should stay simple: make progress on what matters, leave time to think, and avoid overloading each day.\n\n**Main goal:** finish the first TopNotes release and share it with a few users.\n\n- Validate navigation and keyboard shortcuts\n- Review all five translations\n- Test launch at login on macOS\n- Verify every window remains always on top\n\nKeep Friday afternoons free for feedback and small adjustments.",
       weekendTitle: "Weekend ideas",
       weekendBody:
-        "<p>Morning market, a walk by the lake and dinner with friends on Saturday evening.</p>",
+        "Morning market, a walk by the lake and dinner with friends on Saturday evening.",
       meetingTitle: "Product meeting notes",
       meetingBody:
-        "<p>Simplify onboarding and verify the German translations before the next release.</p>",
+        "Simplify onboarding and verify the German translations before the next release.",
       booksTitle: "Books to read",
-      booksBody: "<p>A short autumn selection: essays, fiction and product design.</p>",
+      booksBody: "A short autumn selection: essays, fiction and product design.",
       shoppingTitle: "Shopping list",
-      shoppingBody: "<p>Coffee, bread, tomatoes, basil, oat milk and soap.</p>",
+      shoppingBody: "Coffee, bread, tomatoes, basil, oat milk and soap.",
     },
   },
   it: {
@@ -300,17 +299,16 @@ const messages = {
       planningPreview:
         "Priorità, appuntamenti e piccole cose da ricordare per iniziare bene il mese.",
       planningBody:
-        "<p>Il prossimo mese deve restare semplice: avanzare sulle cose importanti, lasciare tempo per pensare e non sovraccaricare le giornate.</p><p><strong>Obiettivo principale:</strong> completare la prima versione di TopNotes e condividerla con alcuni utenti.</p><ul><li>Convalidare navigazione e scorciatoie</li><li>Rileggere le cinque traduzioni</li><li>Testare l’avvio automatico sul Mac</li><li>Verificare che ogni finestra resti in primo piano</li></ul><p>Lasciare libero il venerdì pomeriggio per feedback e piccoli ritocchi.</p>",
+        "Il prossimo mese deve restare semplice: avanzare sulle cose importanti, lasciare tempo per pensare e non sovraccaricare le giornate.\n\n**Obiettivo principale:** completare la prima versione di TopNotes e condividerla con alcuni utenti.\n\n- Convalidare navigazione e scorciatoie\n- Rileggere le cinque traduzioni\n- Testare l’avvio automatico sul Mac\n- Verificare che ogni finestra resti in primo piano\n\nLasciare libero il venerdì pomeriggio per feedback e piccoli ritocchi.",
       weekendTitle: "Idee per il weekend",
-      weekendBody:
-        "<p>Mercato al mattino, passeggiata al lago e cena con gli amici sabato sera.</p>",
+      weekendBody: "Mercato al mattino, passeggiata al lago e cena con gli amici sabato sera.",
       meetingTitle: "Riunione prodotto",
       meetingBody:
-        "<p>Semplificare l’onboarding e verificare le traduzioni tedesche prima della prossima versione.</p>",
+        "Semplificare l’onboarding e verificare le traduzioni tedesche prima della prossima versione.",
       booksTitle: "Libri da leggere",
-      booksBody: "<p>Una breve selezione autunnale: saggi, narrativa e product design.</p>",
+      booksBody: "Una breve selezione autunnale: saggi, narrativa e product design.",
       shoppingTitle: "Spesa",
-      shoppingBody: "<p>Caffè, pane, pomodori, basilico, latte d’avena e sapone.</p>",
+      shoppingBody: "Caffè, pane, pomodori, basilico, latte d’avena e sapone.",
     },
   },
   es: {
@@ -394,16 +392,16 @@ const messages = {
       planningTitle: "Plan de septiembre",
       planningPreview: "Prioridades, citas y pequeñas cosas que recordar para empezar bien el mes.",
       planningBody:
-        "<p>El próximo mes debe ser sencillo: avanzar en lo importante, reservar tiempo para pensar y evitar sobrecargar los días.</p><p><strong>Objetivo principal:</strong> terminar la primera versión de TopNotes y compartirla con algunos usuarios.</p><ul><li>Validar la navegación y los atajos</li><li>Revisar las cinco traducciones</li><li>Probar el inicio automático en el Mac</li><li>Comprobar que cada ventana permanezca visible</li></ul><p>Reservar los viernes por la tarde para comentarios y pequeños ajustes.</p>",
+        "El próximo mes debe ser sencillo: avanzar en lo importante, reservar tiempo para pensar y evitar sobrecargar los días.\n\n**Objetivo principal:** terminar la primera versión de TopNotes y compartirla con algunos usuarios.\n\n- Validar la navegación y los atajos\n- Revisar las cinco traducciones\n- Probar el inicio automático en el Mac\n- Comprobar que cada ventana permanezca visible\n\nReservar los viernes por la tarde para comentarios y pequeños ajustes.",
       weekendTitle: "Ideas para el fin de semana",
-      weekendBody: "<p>Mercado por la mañana, paseo junto al lago y cena con amigos el sábado.</p>",
+      weekendBody: "Mercado por la mañana, paseo junto al lago y cena con amigos el sábado.",
       meetingTitle: "Reunión de producto",
       meetingBody:
-        "<p>Simplificar la incorporación y revisar las traducciones alemanas antes de la próxima versión.</p>",
+        "Simplificar la incorporación y revisar las traducciones alemanas antes de la próxima versión.",
       booksTitle: "Libros pendientes",
-      booksBody: "<p>Una selección breve para otoño: ensayo, ficción y diseño de producto.</p>",
+      booksBody: "Una selección breve para otoño: ensayo, ficción y diseño de producto.",
       shoppingTitle: "Compra",
-      shoppingBody: "<p>Café, pan, tomates, albahaca, leche de avena y jabón.</p>",
+      shoppingBody: "Café, pan, tomates, albahaca, leche de avena y jabón.",
     },
   },
   de: {
@@ -488,17 +486,16 @@ const messages = {
       planningPreview:
         "Prioritäten, Termine und kleine Erinnerungen für einen guten Start in den Monat.",
       planningBody:
-        "<p>Der nächste Monat soll einfach bleiben: Wichtiges voranbringen, Zeit zum Nachdenken lassen und die Tage nicht überladen.</p><p><strong>Hauptziel:</strong> die erste Version von TopNotes fertigstellen und mit einigen Nutzern teilen.</p><ul><li>Navigation und Tastenkürzel prüfen</li><li>Alle fünf Übersetzungen lesen</li><li>Automatischen Start auf dem Mac testen</li><li>Prüfen, dass jedes Fenster im Vordergrund bleibt</li></ul><p>Freitagnachmittage für Feedback und kleine Anpassungen freihalten.</p>",
+        "Der nächste Monat soll einfach bleiben: Wichtiges voranbringen, Zeit zum Nachdenken lassen und die Tage nicht überladen.\n\n**Hauptziel:** die erste Version von TopNotes fertigstellen und mit einigen Nutzern teilen.\n\n- Navigation und Tastenkürzel prüfen\n- Alle fünf Übersetzungen lesen\n- Automatischen Start auf dem Mac testen\n- Prüfen, dass jedes Fenster im Vordergrund bleibt\n\nFreitagnachmittage für Feedback und kleine Anpassungen freihalten.",
       weekendTitle: "Ideen fürs Wochenende",
-      weekendBody:
-        "<p>Morgens zum Markt, am See spazieren und Samstagabend mit Freunden essen.</p>",
+      weekendBody: "Morgens zum Markt, am See spazieren und Samstagabend mit Freunden essen.",
       meetingTitle: "Produktbesprechung",
       meetingBody:
-        "<p>Das Onboarding vereinfachen und die deutschen Übersetzungen vor der nächsten Version prüfen.</p>",
+        "Das Onboarding vereinfachen und die deutschen Übersetzungen vor der nächsten Version prüfen.",
       booksTitle: "Leseliste",
-      booksBody: "<p>Eine kurze Auswahl für den Herbst: Essays, Romane und Produktdesign.</p>",
+      booksBody: "Eine kurze Auswahl für den Herbst: Essays, Romane und Produktdesign.",
       shoppingTitle: "Einkaufsliste",
-      shoppingBody: "<p>Kaffee, Brot, Tomaten, Basilikum, Hafermilch und Seife.</p>",
+      shoppingBody: "Kaffee, Brot, Tomaten, Basilikum, Hafermilch und Seife.",
     },
   },
 };
