@@ -1,11 +1,15 @@
 <script setup lang="ts">
   import { useI18n } from "vue-i18n";
-  import { editorShortcuts, navigationShortcuts, shortcutLabel } from "@/app/editor/shortcuts";
+  import {
+    editorShortcuts,
+    isMacPlatform as mac,
+    navigationShortcuts,
+    shortcutLabel,
+  } from "@/app/editor/shortcuts";
   import Dialog from "../base/Dialog.vue";
 
   const emit = defineEmits<{ close: [] }>();
   const { t } = useI18n();
-  const mac = typeof navigator !== "undefined" && /Mac|iPad|iPhone/.test(navigator.platform);
   const nativeSelections = [
     { id: "selectionStart", key: "Shift-ArrowUp" },
     { id: "selectionEnd", key: "Shift-ArrowDown" },

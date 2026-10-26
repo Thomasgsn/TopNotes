@@ -136,6 +136,9 @@ export const navigationShortcuts = [
   { id: "help", key: "Mod-/" },
 ];
 
+export const isMacPlatform =
+  typeof navigator !== "undefined" && /Mac|iPad|iPhone/.test(navigator.platform);
+
 export function shortcutLabel(key: string, mac: boolean): string {
   if (!mac && key === "Mod-[") return "Alt ←";
   if (!mac && key === "Mod-]") return "Alt →";

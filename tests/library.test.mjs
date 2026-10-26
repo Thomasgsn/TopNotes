@@ -392,3 +392,15 @@ test("a new note left empty is discarded when another note is selected", async (
   await nextTick();
   assert.equal(store.visibleNotes.value.length, 4);
 });
+
+test("search also matches the name of a note's tag", async () => {
+  const { store } = mountLibrary();
+  store.newNote();
+  store.updateTitle("Sans étiquette");
+  store.setSearchQuery("travail");
+  await nextTick();
+  assert.deepEqual(
+    store.visibleNotes.value.map((note) => note.id),
+    ["note-1"],
+  );
+});

@@ -163,11 +163,15 @@ export function useNotesStore({
 
   const visibleNotes = computed(() => {
     const query = searchQuery.value.trim().toLocaleLowerCase(locale.value);
+    const tagNames = new Map(tags.value.map((tag) => [tag.id, tagName(tag)]));
     return notes.value
       .filter(noteMatchesFilter)
       .filter((note) => {
         if (!query) return true;
-        return `${note.title} ${noteText(note)}`.toLocaleLowerCase(locale.value).includes(query);
+        const tagLabel = note.tag ? (tagNames.get(note.tag) ?? "") : "";
+        return `${note.title} ${noteText(note)} ${tagLabel}`
+          .toLocaleLowerCase(locale.value)
+          .includes(query);
       })
       .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.updatedAt - a.updatedAt);
   });

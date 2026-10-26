@@ -2,6 +2,7 @@
   import { ChevronDown, NotebookTabs, Pin, Search, SquarePen, Trash2, X } from "@lucide/vue";
   import { nextTick, ref } from "vue";
   import { useI18n } from "vue-i18n";
+  import { isMacPlatform, shortcutLabel } from "@/app/editor/shortcuts";
   import type { Note, NoteTag } from "@/app/types";
   import IconButton from "../base/IconButton.vue";
 
@@ -68,6 +69,7 @@
           :placeholder="t('nav.search')"
           :aria-label="t('nav.search')"
           @input="emit('updateQuery', ($event.target as HTMLInputElement).value)"
+          @keydown.esc.prevent="toggleSearch"
         />
       </div>
       <div class="notes__actions">
@@ -84,14 +86,18 @@
           :icon="searchVisible ? X : Search"
           :size="searchVisible ? 16 : 17"
           :label="searchVisible ? t('nav.clearSearch') : t('nav.search')"
-          :title="searchVisible ? t('nav.clearSearch') : `${t('nav.search')} (⌘F)`"
+          :title="
+            searchVisible
+              ? t('nav.clearSearch')
+              : `${t('nav.search')} (${shortcutLabel('Mod-f', isMacPlatform)})`
+          "
           @click="toggleSearch"
         />
         <IconButton
           :icon="SquarePen"
           :size="17"
           :label="t('nav.newNote')"
-          :title="`${t('nav.newNote')} (⌘N)`"
+          :title="`${t('nav.newNote')} (${shortcutLabel('Mod-n', isMacPlatform)})`"
           @click="emit('newNote')"
         />
       </div>
