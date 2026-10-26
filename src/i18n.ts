@@ -1,6 +1,7 @@
 import { createI18n } from "vue-i18n";
 import { tagMessages } from "./tagMessages";
 import { editorMessages } from "./editorMessages";
+import { confirmMessages } from "./confirmMessages";
 
 export const supportedLocales = ["fr", "en", "it", "es", "de"] as const;
 
@@ -23,6 +24,7 @@ const messages = {
   fr: {
     ...editorMessages.fr,
     tagManager: tagMessages.fr,
+    confirm: confirmMessages.fr,
     app: {
       name: "TopNotes",
       library: "Bibliothèque",
@@ -122,6 +124,7 @@ const messages = {
   en: {
     ...editorMessages.en,
     tagManager: tagMessages.en,
+    confirm: confirmMessages.en,
     app: {
       name: "TopNotes",
       library: "Library",
@@ -214,6 +217,7 @@ const messages = {
   it: {
     ...editorMessages.it,
     tagManager: tagMessages.it,
+    confirm: confirmMessages.it,
     app: {
       name: "TopNotes",
       library: "Libreria",
@@ -306,6 +310,7 @@ const messages = {
   es: {
     ...editorMessages.es,
     tagManager: tagMessages.es,
+    confirm: confirmMessages.es,
     app: {
       name: "TopNotes",
       library: "Biblioteca",
@@ -396,6 +401,7 @@ const messages = {
   de: {
     ...editorMessages.de,
     tagManager: tagMessages.de,
+    confirm: confirmMessages.de,
     app: {
       name: "TopNotes",
       library: "Mediathek",

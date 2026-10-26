@@ -4,6 +4,7 @@
   import SettingsDialog from "./components/dialogs/SettingsDialog.vue";
   import TagsDialog from "./components/dialogs/TagsDialog.vue";
   import ShortcutsDialog from "./components/dialogs/ShortcutsDialog.vue";
+  import ConfirmDialog from "./components/dialogs/ConfirmDialog.vue";
   import EditorPanel from "./components/panels/EditorPanel.vue";
   import NavigationPanel from "./components/panels/NavigationPanel.vue";
   import NotesPanel from "./components/panels/NotesPanel.vue";
@@ -43,10 +44,13 @@
   const {
     activeFilter,
     activeFilterTitle,
+    cancelDelete,
+    confirmDelete,
     formatRelativeTime,
     newNote,
     noteCounts,
     notePreview,
+    pendingDeletion,
     restoreNote,
     saved,
     searchQuery,
@@ -162,5 +166,15 @@
       @close="closeTags"
     />
     <ShortcutsDialog v-if="shortcutsVisible" @close="shortcutsVisible = false" />
+    <ConfirmDialog
+      v-if="pendingDeletion"
+      :title="t('confirm.deleteNoteTitle')"
+      :message="
+        t('confirm.deleteNoteMessage', { title: pendingDeletion.title || t('app.untitled') })
+      "
+      :confirm-label="t('confirm.deleteNote')"
+      @confirm="confirmDelete"
+      @cancel="cancelDelete"
+    />
   </main>
 </template>

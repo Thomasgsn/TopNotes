@@ -121,6 +121,7 @@ export function useNotesStore({
   const activeFilter = ref<FilterId>("all");
   const searchQuery = ref("");
   const saved = ref(true);
+  const pendingDeletionId = ref<string | null>(null);
   const nativeRuntime = isTauri();
 
   let initialized = false;
@@ -156,6 +157,10 @@ export function useNotesStore({
 
   const selectedNote = computed(
     () => notes.value.find((note) => note.id === selectedNoteId.value) ?? null,
+  );
+
+  const pendingDeletion = computed(
+    () => notes.value.find((note) => note.id === pendingDeletionId.value) ?? null,
   );
 
   const activeFilterTitle = computed(() => {
@@ -364,14 +369,26 @@ export function useNotesStore({
     const note = selectedNote.value;
     if (!note) return;
     if (note.trashed) {
-      notes.value = notes.value.filter((candidate) => candidate.id !== note.id);
-    } else {
-      note.trashed = true;
-      note.archived = false;
-      note.pinned = false;
-      note.updatedAt = Date.now();
+      pendingDeletionId.value = note.id;
+      return;
     }
+    note.trashed = true;
+    note.archived = false;
+    note.pinned = false;
+    note.updatedAt = Date.now();
     markDirty();
+  }
+
+  function confirmDelete(): void {
+    const id = pendingDeletionId.value;
+    pendingDeletionId.value = null;
+    if (!id) return;
+    notes.value = notes.value.filter((candidate) => candidate.id !== id);
+    markDirty();
+  }
+
+  function cancelDelete(): void {
+    pendingDeletionId.value = null;
   }
 
   function formatRelativeTime(timestamp: number): string {
@@ -504,10 +521,13 @@ export function useNotesStore({
   return {
     activeFilter: readonly(activeFilter),
     activeFilterTitle,
+    cancelDelete,
+    confirmDelete,
     formatRelativeTime,
     newNote,
     noteCounts,
     notePreview,
+    pendingDeletion,
     saved: readonly(saved),
     searchQuery: readonly(searchQuery),
     selectFilter,

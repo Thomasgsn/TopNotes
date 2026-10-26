@@ -174,3 +174,27 @@ test("app shortcuts open search, settings and help without intercepting editor f
   assert.equal(markdown.defaultPrevented, false);
   assert.equal(calls.search, 2);
 });
+
+test("deleting a trashed note permanently waits for confirmation", async () => {
+  const { store } = mountLibrary();
+  store.trashOrDeleteNote();
+  store.selectFilter("trash");
+  await nextTick();
+  assert.equal(store.selectedNote.value.id, "note-1");
+
+  store.trashOrDeleteNote();
+  await nextTick();
+  assert.equal(store.visibleNotes.value.length, 1);
+  assert.equal(store.pendingDeletion.value.id, "note-1");
+
+  store.cancelDelete();
+  await nextTick();
+  assert.equal(store.pendingDeletion.value, null);
+  assert.equal(store.visibleNotes.value.length, 1);
+
+  store.trashOrDeleteNote();
+  store.confirmDelete();
+  await nextTick();
+  assert.equal(store.pendingDeletion.value, null);
+  assert.equal(store.visibleNotes.value.length, 0);
+});
