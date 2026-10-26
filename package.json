@@ -47,6 +47,7 @@
     "@tauri-apps/plugin-autostart": "^2.5.1",
     "@tauri-apps/plugin-opener": "^2",
     "@tiptap/core": "^3.32.0",
+    "@tiptap/extension-link": "^3.32.0",
     "@tiptap/extension-list": "^3.32.0",
     "@tiptap/extension-paragraph": "^3.32.0",
     "@tiptap/markdown": "^3.32.0",

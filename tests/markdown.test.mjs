@@ -4,7 +4,13 @@ import { JSDOM } from "jsdom";
 import { Editor } from "@tiptap/core";
 import { Slice } from "@tiptap/pm/model";
 import { markdownExtensions, noteText } from "../src/editor/markdown.ts";
-import { applyLink, readLinkDraft, removeLink, normalizeLinkUrl } from "../src/editor/links.ts";
+import {
+  applyLink,
+  linkHrefAt,
+  readLinkDraft,
+  removeLink,
+  normalizeLinkUrl,
+} from "../src/editor/links.ts";
 import { editorShortcuts, navigationShortcuts } from "../src/editor/shortcuts.ts";
 import { editorMessages } from "../src/editorMessages.ts";
 
@@ -331,4 +337,23 @@ test("cached note text follows body changes", () => {
   assert.equal(noteText(note), "Avant");
   note.body = "**Après**";
   assert.equal(noteText(note), "Après");
+});
+
+test("unsafe link addresses in Markdown are dropped instead of stored", () => {
+  const editor = createEditor(
+    "[script](javascript:alert(1)) [data](data:text/html,hi) [site](https://example.com)",
+  );
+  const hrefs = editor
+    .getJSON()
+    .content[0].content.flatMap((node) => node.marks ?? [])
+    .map((mark) => mark.attrs.href);
+  assert.deepEqual(hrefs, ["https://example.com"]);
+  assert.doesNotMatch(editor.getMarkdown(), /javascript:|data:/);
+});
+
+test("the safe link address under a position can be read for Cmd-click", () => {
+  const editor = createEditor("Voir [le site](https://example.com) ici");
+  const inside = editor.state.doc.textContent.indexOf("site") + 1;
+  assert.equal(linkHrefAt(editor.state, inside), "https://example.com/");
+  assert.equal(linkHrefAt(editor.state, 2), null);
 });

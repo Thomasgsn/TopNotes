@@ -1,8 +1,15 @@
 <script setup lang="ts">
+  import type { EditorProps } from "@tiptap/pm/view";
   import { EditorContent, useEditor } from "@tiptap/vue-3";
   import { watch } from "vue";
   import { markdownExtensions } from "@/app/editor/markdown";
-  import { applyLink, readLinkDraft, removeLink } from "@/app/editor/links";
+  import {
+    applyLink,
+    linkHrefAt,
+    openExternalLink,
+    readLinkDraft,
+    removeLink,
+  } from "@/app/editor/links";
   import type { LinkDraft } from "@/app/editor/links";
 
   const props = defineProps<{
@@ -16,19 +23,32 @@
     editLink: [draft: LinkDraft];
   }>();
 
-  const editor = useEditor({
-    extensions: markdownExtensions({ openLink }),
-    content: props.body,
-    contentType: props.bodyFormat === "markdown" ? "markdown" : "html",
-    editorProps: {
+  // setOptions replaces editorProps as a whole, so build them in one place.
+  function editorProps(placeholder: string): EditorProps {
+    return {
       attributes: {
         class: "markdown-editor__input",
         role: "textbox",
         "aria-multiline": "true",
-        "aria-label": props.placeholder,
-        "data-placeholder": props.placeholder,
+        "aria-label": placeholder,
+        "data-placeholder": placeholder,
       },
-    },
+      // Links are edited with a plain click; Cmd/Ctrl-click opens them.
+      handleClick: (view, position, event) => {
+        if (!event.metaKey && !event.ctrlKey) return false;
+        const href = linkHrefAt(view.state, position);
+        if (!href) return false;
+        openExternalLink(href);
+        return true;
+      },
+    };
+  }
+
+  const editor = useEditor({
+    extensions: markdownExtensions({ openLink }),
+    content: props.body,
+    contentType: props.bodyFormat === "markdown" ? "markdown" : "html",
+    editorProps: editorProps(props.placeholder),
     onCreate: ({ editor: current }) => {
       if (props.bodyFormat !== "markdown") emit("convert", current.getMarkdown());
     },
@@ -37,19 +57,7 @@
 
   watch(
     () => props.placeholder,
-    (placeholder) => {
-      editor.value?.setOptions({
-        editorProps: {
-          attributes: {
-            class: "markdown-editor__input",
-            role: "textbox",
-            "aria-multiline": "true",
-            "aria-label": placeholder,
-            "data-placeholder": placeholder,
-          },
-        },
-      });
-    },
+    (placeholder) => editor.value?.setOptions({ editorProps: editorProps(placeholder) }),
   );
 
   function openLink(): void {

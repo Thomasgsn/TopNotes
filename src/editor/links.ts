@@ -1,5 +1,8 @@
+import { isTauri } from "@tauri-apps/api/core";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import type { Editor } from "@tiptap/core";
 import { getMarkRange } from "@tiptap/core";
+import type { EditorState } from "@tiptap/pm/state";
 
 export interface LinkDraft {
   from: number;
@@ -53,4 +56,21 @@ export function removeLink(editor: Editor, draft: LinkDraft): boolean {
     .setTextSelection({ from: draft.from, to: draft.to })
     .unsetLink()
     .run();
+}
+
+// Returns the link address under a document position, only if it is safe to open.
+export function linkHrefAt(state: EditorState, position: number): string | null {
+  const marks = state.doc.nodeAt(position)?.marks ?? state.doc.resolve(position).marks();
+  const link = marks.find((mark) => mark.type.name === "link");
+  return link ? normalizeLinkUrl(String(link.attrs.href ?? "")) : null;
+}
+
+export function openExternalLink(href: string): void {
+  if (!isTauri()) {
+    window.open(href, "_blank", "noopener,noreferrer");
+    return;
+  }
+  void openUrl(href).catch((error: unknown) => {
+    console.error("TopNotes could not open the link.", error);
+  });
 }

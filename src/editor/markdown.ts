@@ -1,5 +1,6 @@
 import type { JSONContent } from "@tiptap/core";
 import { Extension, InputRule } from "@tiptap/core";
+import Link from "@tiptap/extension-link";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
 import Paragraph from "@tiptap/extension-paragraph";
 import { Markdown, MarkdownManager } from "@tiptap/markdown";
@@ -45,6 +46,15 @@ const MarkdownParagraph = Paragraph.extend({
   },
 });
 
+// Link validation (isAllowedUri) does not apply to Markdown parsing: keep the
+// label but drop links whose address is not a safe web or email address.
+const SafeLink = Link.extend({
+  parseMarkdown(token, helpers) {
+    if (!normalizeLinkUrl(String(token.href ?? ""))) return helpers.parseInline(token.tokens ?? []);
+    return this.parent?.(token, helpers) ?? [];
+  },
+}).configure({ openOnClick: false, isAllowedUri: (url) => normalizeLinkUrl(url) !== null });
+
 const MarkdownClipboard = Extension.create({
   name: "markdownClipboard",
   addProseMirrorPlugins() {
@@ -86,7 +96,8 @@ const SlackShortcuts = Extension.create<{ openLink: () => void }>({
 
 export function markdownExtensions(options: { openLink?: () => void } = {}) {
   return [
-    StarterKit.configure({ paragraph: false, link: { openOnClick: false } }),
+    StarterKit.configure({ paragraph: false, link: false }),
+    SafeLink,
     MarkdownParagraph,
     TaskList,
     MarkdownTaskItem.configure({ nested: true }),
