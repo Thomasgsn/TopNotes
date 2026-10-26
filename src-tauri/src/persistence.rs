@@ -10,6 +10,8 @@ use tauri::State;
 
 const SCHEMA_VERSION: u32 = 1;
 const DATA_FILE_NAME: &str = "topnotes.json";
+const BACKUP_DIRECTORY_NAME: &str = "backups";
+const BACKUPS_TO_KEEP: usize = 7;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -85,6 +87,7 @@ pub(crate) struct Persistence {
 struct PersistenceInner {
     data_path: PathBuf,
     data: Mutex<AppData>,
+    last_backup_day: Mutex<String>,
 }
 
 impl Persistence {
@@ -95,6 +98,7 @@ impl Persistence {
             inner: Arc::new(PersistenceInner {
                 data_path,
                 data: Mutex::new(data),
+                last_backup_day: Mutex::new(String::new()),
             }),
         })
     }
@@ -118,11 +122,27 @@ impl Persistence {
 
     fn update(&self, update: impl FnOnce(&mut AppData)) -> io::Result<()> {
         let mut current = self.lock_data()?;
+        self.back_up_once_per_day();
         let mut next = current.clone();
         update(&mut next);
         write_atomically(&self.inner.data_path, &next)?;
         *current = next;
         Ok(())
+    }
+
+    // A failed backup must never prevent saving the user's notes.
+    fn back_up_once_per_day(&self) {
+        let today = today_utc();
+        let Ok(mut last_backup_day) = self.inner.last_backup_day.lock() else {
+            return;
+        };
+        if *last_backup_day == today {
+            return;
+        }
+        match back_up_daily(&self.inner.data_path, &today) {
+            Ok(()) => *last_backup_day = today,
+            Err(error) => eprintln!("TopNotes could not back up its data: {error}"),
+        }
     }
 
     fn lock_data(&self) -> io::Result<MutexGuard<'_, AppData>> {
@@ -189,6 +209,73 @@ fn load_or_recover(path: &Path) -> io::Result<AppData> {
             Ok(AppData::default())
         }
     }
+}
+
+/// Copies the data file as it was before today's first write into
+/// `backups/topnotes-YYYY-MM-DD.json` and keeps the most recent backups only.
+fn back_up_daily(data_path: &Path, today: &str) -> io::Result<()> {
+    if !data_path.exists() {
+        return Ok(());
+    }
+    let directory = data_path
+        .parent()
+        .ok_or_else(|| io::Error::other("the data path has no parent directory"))?
+        .join(BACKUP_DIRECTORY_NAME);
+    fs::create_dir_all(&directory)?;
+
+    let backup_path = directory.join(format!("topnotes-{today}.json"));
+    if !backup_path.exists() {
+        let temporary_path = directory.join(format!(".topnotes-{today}.json.tmp"));
+        fs::copy(data_path, &temporary_path)?;
+        fs::rename(&temporary_path, &backup_path)?;
+    }
+    prune_backups(&directory)
+}
+
+fn prune_backups(directory: &Path) -> io::Result<()> {
+    let mut backups: Vec<PathBuf> = fs::read_dir(directory)?
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .filter(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(|name| name.starts_with("topnotes-") && name.ends_with(".json"))
+        })
+        .collect();
+    backups.sort();
+    let excess = backups.len().saturating_sub(BACKUPS_TO_KEEP);
+    for path in &backups[..excess] {
+        fs::remove_file(path)?;
+    }
+    Ok(())
+}
+
+fn today_utc() -> String {
+    let seconds = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    civil_date(seconds / 86_400)
+}
+
+/// Formats a number of days since 1970-01-01 as `YYYY-MM-DD` (Howard Hinnant's
+/// days-to-civil algorithm), avoiding a date crate for a single file name.
+fn civil_date(days_since_epoch: u64) -> String {
+    let shifted = days_since_epoch as i64 + 719_468;
+    let era = shifted.div_euclid(146_097);
+    let day_of_era = shifted.rem_euclid(146_097);
+    let year_of_era =
+        (day_of_era - day_of_era / 1_460 + day_of_era / 36_524 - day_of_era / 146_096) / 365;
+    let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
+    let month_index = (5 * day_of_year + 2) / 153;
+    let day = day_of_year - (153 * month_index + 2) / 5 + 1;
+    let month = if month_index < 10 {
+        month_index + 3
+    } else {
+        month_index - 9
+    };
+    let year = year_of_era + era * 400 + i64::from(month <= 2);
+    format!("{year:04}-{month:02}-{day:02}")
 }
 
 fn preserve_corrupt_file(path: &Path) -> io::Result<()> {
@@ -369,6 +456,73 @@ mod tests {
         assert_eq!(reopened.notes, Some(notes));
         assert_eq!(reopened.tags, Some(tags));
         assert_eq!(reopened.settings, Some(settings()));
+    }
+
+    fn backup_names(directory: &Path) -> Vec<String> {
+        let mut names: Vec<String> = fs::read_dir(directory.join(BACKUP_DIRECTORY_NAME))
+            .map(|entries| {
+                entries
+                    .filter_map(Result::ok)
+                    .map(|entry| entry.file_name().to_string_lossy().into_owned())
+                    .collect()
+            })
+            .unwrap_or_default();
+        names.sort();
+        names
+    }
+
+    #[test]
+    fn first_write_of_the_day_backs_up_the_previous_data() {
+        let directory = TestDirectory::new();
+        let persistence = Persistence::open(directory.0.clone()).unwrap();
+        persistence.save_settings(settings()).unwrap();
+        let before = fs::read_to_string(directory.0.join(DATA_FILE_NAME)).unwrap();
+
+        back_up_daily(&directory.0.join(DATA_FILE_NAME), "2026-10-26").unwrap();
+        persistence.save_notes(Vec::new(), None).unwrap();
+        back_up_daily(&directory.0.join(DATA_FILE_NAME), "2026-10-26").unwrap();
+
+        assert_eq!(backup_names(&directory.0), vec!["topnotes-2026-10-26.json"]);
+        let backup = directory
+            .0
+            .join(BACKUP_DIRECTORY_NAME)
+            .join("topnotes-2026-10-26.json");
+        assert_eq!(fs::read_to_string(backup).unwrap(), before);
+    }
+
+    #[test]
+    fn nothing_is_backed_up_before_the_first_save() {
+        let directory = TestDirectory::new();
+        fs::create_dir_all(&directory.0).unwrap();
+        back_up_daily(&directory.0.join(DATA_FILE_NAME), "2026-10-26").unwrap();
+        assert!(backup_names(&directory.0).is_empty());
+    }
+
+    #[test]
+    fn only_the_most_recent_backups_are_kept() {
+        let directory = TestDirectory::new();
+        let backups = directory.0.join(BACKUP_DIRECTORY_NAME);
+        fs::create_dir_all(&backups).unwrap();
+        for day in 1..=9 {
+            fs::write(backups.join(format!("topnotes-2026-10-0{day}.json")), "{}").unwrap();
+        }
+        fs::write(backups.join("notes.txt"), "kept").unwrap();
+        fs::write(directory.0.join(DATA_FILE_NAME), "{}").unwrap();
+
+        back_up_daily(&directory.0.join(DATA_FILE_NAME), "2026-10-26").unwrap();
+
+        let names = backup_names(&directory.0);
+        assert_eq!(names.len(), BACKUPS_TO_KEEP + 1);
+        assert_eq!(names.first().unwrap(), "notes.txt");
+        assert_eq!(names[1], "topnotes-2026-10-04.json");
+        assert_eq!(names.last().unwrap(), "topnotes-2026-10-26.json");
+    }
+
+    #[test]
+    fn civil_dates_are_computed_from_unix_days() {
+        assert_eq!(civil_date(0), "1970-01-01");
+        assert_eq!(civil_date(20_752), "2026-10-26");
+        assert_eq!(civil_date(11_016), "2000-02-29");
     }
 
     #[test]
