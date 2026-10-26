@@ -12,6 +12,9 @@ class MemoryStorage {
   removeItem(key) {
     this.#values.delete(key);
   }
+  keys() {
+    return this.#values.keys();
+  }
 }
 
 beforeEach(() => {
@@ -63,4 +66,26 @@ test("notes the app cannot read are kept on disk instead of being dropped", asyn
   );
   assert.equal(stored.notes[0].title, "Modifiée");
   assert.deepEqual(stored.notes[1], unreadable);
+});
+
+test("browser data from a newer version is reported instead of being replaced", async () => {
+  const { BrowserPersistence } = await import("../src/persistence.ts");
+  const newer = JSON.stringify({ schemaVersion: 2, notes: [] });
+  localStorage.setItem("topnotes.data.v1", newer);
+
+  await assert.rejects(new BrowserPersistence().load(), /schema 2/);
+  assert.equal(localStorage.getItem("topnotes.data.v1"), newer);
+});
+
+test("unreadable browser data is kept aside before starting fresh", async () => {
+  const { BrowserPersistence } = await import("../src/persistence.ts");
+  localStorage.setItem("topnotes.data.v1", "{not json");
+
+  const loaded = await new BrowserPersistence().load();
+  assert.equal(loaded.notes, null);
+  const keys = [...localStorage.keys()].filter((key) =>
+    key.startsWith("topnotes.data.v1.corrupt-"),
+  );
+  assert.equal(keys.length, 1);
+  assert.equal(localStorage.getItem(keys[0]), "{not json");
 });

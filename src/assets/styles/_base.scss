@@ -22,6 +22,38 @@
   --saved: #5f8063;
 }
 
+.load-error {
+  max-width: 520px;
+  margin: 15vh auto 0;
+  padding: 28px;
+  border-radius: 14px;
+  color: var(--text);
+  background: var(--paper);
+  box-shadow: 0 24px 70px rgb(20 22 24 / 18%);
+
+  &__title {
+    margin: 0 0 10px;
+    font-size: 20px;
+  }
+
+  &__help {
+    margin: 0 0 16px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  &__details {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    color: var(--muted);
+    background: var(--hover);
+    font-size: 11px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

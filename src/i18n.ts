@@ -47,6 +47,9 @@ const messages = {
       characters: "{count} caractères",
       noNotes: "Aucune note ici",
       noNotesHint: "Créez une note ou choisissez une autre section.",
+      loadFailedTitle: "TopNotes n’a pas pu lire vos notes",
+      loadFailedHelp:
+        "Vos données n’ont pas été modifiées. Elles ont peut-être été créées par une version plus récente de TopNotes : mettez l’application à jour, puis relancez-la.",
       noSearchResults: "Aucun résultat pour « {query} »",
       untitled: "Sans titre",
       startWriting: "Commencez à écrire…",
@@ -148,6 +151,9 @@ const messages = {
       characters: "{count} characters",
       noNotes: "No notes here",
       noNotesHint: "Create a note or choose another section.",
+      loadFailedTitle: "TopNotes could not read your notes",
+      loadFailedHelp:
+        "Your data has not been changed. It may have been created by a newer version of TopNotes: update the app, then open it again.",
       noSearchResults: "No results for “{query}”",
       untitled: "Untitled",
       startWriting: "Start writing…",
@@ -243,6 +249,9 @@ const messages = {
       characters: "{count} caratteri",
       noNotes: "Nessuna nota qui",
       noNotesHint: "Crea una nota o scegli un’altra sezione.",
+      loadFailedTitle: "TopNotes non è riuscito a leggere le tue note",
+      loadFailedHelp:
+        "I tuoi dati non sono stati modificati. Potrebbero essere stati creati da una versione più recente di TopNotes: aggiorna l’app e riaprila.",
       noSearchResults: "Nessun risultato per «{query}»",
       untitled: "Senza titolo",
       startWriting: "Inizia a scrivere…",
@@ -337,6 +346,9 @@ const messages = {
       characters: "{count} caracteres",
       noNotes: "No hay notas aquí",
       noNotesHint: "Crea una nota o elige otra sección.",
+      loadFailedTitle: "TopNotes no ha podido leer tus notas",
+      loadFailedHelp:
+        "Tus datos no se han modificado. Puede que los haya creado una versión más reciente de TopNotes: actualiza la aplicación y vuelve a abrirla.",
       noSearchResults: "Sin resultados para «{query}»",
       untitled: "Sin título",
       startWriting: "Empieza a escribir…",
@@ -430,6 +442,9 @@ const messages = {
       characters: "{count} Zeichen",
       noNotes: "Hier sind keine Notizen",
       noNotesHint: "Erstelle eine Notiz oder wähle einen anderen Bereich.",
+      loadFailedTitle: "TopNotes konnte deine Notizen nicht lesen",
+      loadFailedHelp:
+        "Deine Daten wurden nicht verändert. Sie wurden möglicherweise von einer neueren TopNotes-Version erstellt: Aktualisiere die App und öffne sie erneut.",
       noSearchResults: "Keine Ergebnisse für „{query}“",
       untitled: "Ohne Titel",
       startWriting: "Schreib etwas…",

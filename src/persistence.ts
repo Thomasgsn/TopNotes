@@ -153,6 +153,14 @@ function loadLegacyData(): PersistedAppData | null {
     : { schemaVersion: SCHEMA_VERSION, notes, tags: null, settings };
 }
 
+function parseJson(value: string): unknown {
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return null;
+  }
+}
+
 function clearLegacyData(): void {
   for (const key of legacyStorageKeys) localStorage.removeItem(key);
 }
@@ -222,16 +230,22 @@ export class BrowserPersistence extends SerializedPersistence {
   async load(): Promise<PersistedAppData> {
     const storedValue = localStorage.getItem(DATA_STORAGE_KEY);
     if (storedValue !== null) {
-      try {
-        const stored = normalizeAppData(JSON.parse(storedValue) as unknown);
-        if (stored) {
-          this.data = stored.data;
-          this.unreadableNotes = stored.unreadableNotes;
-          return this.data;
-        }
-      } catch {
-        // The legacy data below remains the safest available recovery source.
+      const parsed = parseJson(storedValue);
+      const schemaVersion = (parsed as { schemaVersion?: unknown } | null)?.schemaVersion;
+      if (typeof schemaVersion === "number" && schemaVersion !== SCHEMA_VERSION) {
+        // Never replace data written by another version of TopNotes.
+        throw new Error(
+          `unsupported TopNotes data schema ${schemaVersion}; expected ${SCHEMA_VERSION}`,
+        );
       }
+      const stored = normalizeAppData(parsed);
+      if (stored) {
+        this.data = stored.data;
+        this.unreadableNotes = stored.unreadableNotes;
+        return this.data;
+      }
+      // Keep the unreadable value aside; legacy data below is the next best source.
+      localStorage.setItem(`${DATA_STORAGE_KEY}.corrupt-${Date.now()}`, storedValue);
     }
 
     const legacy = loadLegacyData();

@@ -88,22 +88,33 @@ struct PersistenceInner {
     data_path: PathBuf,
     data: Mutex<AppData>,
     last_backup_day: Mutex<String>,
+    // Set when the data file exists but cannot be used (newer schema, read
+    // error). Writes are then refused so the file is never overwritten.
+    load_error: Option<String>,
 }
 
 impl Persistence {
     pub(crate) fn open(app_data_dir: PathBuf) -> io::Result<Self> {
         let data_path = app_data_dir.join(DATA_FILE_NAME);
-        let data = load_or_recover(&data_path)?;
+        let (data, load_error) = match load_or_recover(&data_path) {
+            Ok(data) => (data, None),
+            Err(error) => (
+                AppData::default(),
+                Some(format!("{} ({})", error, data_path.display())),
+            ),
+        };
         Ok(Self {
             inner: Arc::new(PersistenceInner {
                 data_path,
                 data: Mutex::new(data),
                 last_backup_day: Mutex::new(String::new()),
+                load_error,
             }),
         })
     }
 
     fn load(&self) -> io::Result<AppData> {
+        self.ensure_loaded()?;
         Ok(self.lock_data()?.clone())
     }
 
@@ -121,6 +132,7 @@ impl Persistence {
     }
 
     fn update(&self, update: impl FnOnce(&mut AppData)) -> io::Result<()> {
+        self.ensure_loaded()?;
         let mut current = self.lock_data()?;
         self.back_up_once_per_day();
         let mut next = current.clone();
@@ -128,6 +140,13 @@ impl Persistence {
         write_atomically(&self.inner.data_path, &next)?;
         *current = next;
         Ok(())
+    }
+
+    fn ensure_loaded(&self) -> io::Result<()> {
+        match &self.inner.load_error {
+            Some(error) => Err(io::Error::other(error.clone())),
+            None => Ok(()),
+        }
     }
 
     // A failed backup must never prevent saving the user's notes.
@@ -523,6 +542,24 @@ mod tests {
         assert_eq!(civil_date(0), "1970-01-01");
         assert_eq!(civil_date(20_752), "2026-10-26");
         assert_eq!(civil_date(11_016), "2000-02-29");
+    }
+
+    #[test]
+    fn data_from_a_newer_version_is_reported_and_never_overwritten() {
+        let directory = TestDirectory::new();
+        fs::create_dir_all(&directory.0).unwrap();
+        let newer = r#"{"schemaVersion":2,"notes":[],"futureField":true}"#;
+        fs::write(directory.0.join(DATA_FILE_NAME), newer).unwrap();
+
+        let persistence = Persistence::open(directory.0.clone()).unwrap();
+        let error = persistence.load().unwrap_err().to_string();
+        assert!(error.contains("schema 2"), "{error}");
+        assert!(persistence.save_notes(Vec::new(), None).is_err());
+        assert!(persistence.save_settings(settings()).is_err());
+        assert_eq!(
+            fs::read_to_string(directory.0.join(DATA_FILE_NAME)).unwrap(),
+            newer
+        );
     }
 
     #[test]
