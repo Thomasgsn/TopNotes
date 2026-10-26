@@ -12,6 +12,13 @@
   import NavigationPanel from "./components/panels/NavigationPanel.vue";
   import NotesPanel from "./components/panels/NotesPanel.vue";
   import { appPersistence } from "./persistence";
+  import {
+    buildJsonExport,
+    buildMarkdownExport,
+    exportFolderName,
+    parseJsonImport,
+    saveExport,
+  } from "./exchange";
   import type { PersistedAppData } from "./persistence";
   import { TRASH_RETENTION_DAYS, useNotesStore } from "./stores/notes";
   import { useNoteWindow } from "./stores/noteWindow";
@@ -57,6 +64,8 @@
     emptyTrashPending,
     forceQuit,
     formatRelativeTime,
+    importNotes,
+    notes,
     newNote,
     noteCounts,
     notePreview,
@@ -115,6 +124,41 @@
   watch(selectedNoteId, () => {
     if (detached.value) void attach();
   });
+
+  const exchangeStatus = ref("");
+  const exchangeBusy = ref(false);
+
+  async function exportNotes(format: "json" | "markdown"): Promise<void> {
+    exchangeBusy.value = true;
+    try {
+      const translate = (key: string) => String(t(key));
+      const files =
+        format === "json"
+          ? [buildJsonExport(notes.value, tags.value)]
+          : buildMarkdownExport(notes.value, tags.value, translate);
+      const folder = await saveExport(exportFolderName(), files);
+      exchangeStatus.value = folder ? t("exchange.exported", { folder }) : t("exchange.downloaded");
+    } catch (error) {
+      console.error("TopNotes could not export the notes.", error);
+      exchangeStatus.value = t("exchange.exportFailed");
+    } finally {
+      exchangeBusy.value = false;
+    }
+  }
+
+  async function importFile(file: File): Promise<void> {
+    exchangeBusy.value = true;
+    try {
+      const data = parseJsonImport(await file.text());
+      const { added } = importNotes(data.notes, data.tags);
+      exchangeStatus.value = t("exchange.imported", { count: added }, added);
+    } catch (error) {
+      console.error("TopNotes could not import the file.", error);
+      exchangeStatus.value = t("exchange.importFailed");
+    } finally {
+      exchangeBusy.value = false;
+    }
+  }
 
   // Quitting from the tray can fail while the window is hidden: bring it back so the
   // unsaved-changes prompt is actually seen.
@@ -192,9 +236,13 @@
       :native-runtime="nativeRuntime"
       :autostart-enabled="autostartEnabled"
       :autostart-busy="autostartBusy"
+      :exchange-status="exchangeStatus"
+      :exchange-busy="exchangeBusy"
       @close="closeSettings"
       @set-locale="setLocale"
       @toggle-autostart="toggleAutostart"
+      @export-notes="exportNotes"
+      @import-file="importFile"
     />
     <TagsDialog
       v-if="tagsVisible"

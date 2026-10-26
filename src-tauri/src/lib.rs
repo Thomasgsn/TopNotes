@@ -1,3 +1,4 @@
+mod export;
 mod persistence;
 
 use tauri::{
@@ -189,6 +190,7 @@ pub fn run() {
             }
         })
         .invoke_handler(tauri::generate_handler![
+            export::export_files,
             persistence::load_app_data,
             persistence::save_notes,
             persistence::save_settings,

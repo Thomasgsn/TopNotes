@@ -3,6 +3,7 @@ import { tagMessages } from "./tagMessages.ts";
 import { editorMessages } from "./editorMessages.ts";
 import { confirmMessages } from "./confirmMessages.ts";
 import { undoMessages } from "./undoMessages.ts";
+import { exchangeMessages } from "./exchangeMessages.ts";
 
 export const supportedLocales = ["fr", "en", "it", "es", "de"] as const;
 
@@ -27,6 +28,7 @@ const messages = {
     tagManager: tagMessages.fr,
     confirm: confirmMessages.fr,
     undo: undoMessages.fr,
+    exchange: exchangeMessages.fr,
     sort: {
       label: "Trier par",
       updated: "Date de modification",
@@ -142,6 +144,7 @@ const messages = {
     tagManager: tagMessages.en,
     confirm: confirmMessages.en,
     undo: undoMessages.en,
+    exchange: exchangeMessages.en,
     sort: {
       label: "Sort by",
       updated: "Date modified",
@@ -250,6 +253,7 @@ const messages = {
     tagManager: tagMessages.it,
     confirm: confirmMessages.it,
     undo: undoMessages.it,
+    exchange: exchangeMessages.it,
     sort: {
       label: "Ordina per",
       updated: "Data di modifica",
@@ -357,6 +361,7 @@ const messages = {
     tagManager: tagMessages.es,
     confirm: confirmMessages.es,
     undo: undoMessages.es,
+    exchange: exchangeMessages.es,
     sort: {
       label: "Ordenar por",
       updated: "Fecha de modificación",
@@ -463,6 +468,7 @@ const messages = {
     tagManager: tagMessages.de,
     confirm: confirmMessages.de,
     undo: undoMessages.de,
+    exchange: exchangeMessages.de,
     sort: {
       label: "Sortieren nach",
       updated: "Änderungsdatum",

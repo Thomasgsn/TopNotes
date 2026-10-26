@@ -1,5 +1,6 @@
 export const undoMessages = {
   fr: {
+    imported: "{count} note importée | {count} notes importées",
     action: "Annuler",
     trashed: "Note mise à la corbeille",
     deleted: "Note supprimée",
@@ -7,6 +8,7 @@ export const undoMessages = {
     tagDeleted: "Étiquette « {name} » supprimée",
   },
   en: {
+    imported: "{count} note imported | {count} notes imported",
     action: "Undo",
     trashed: "Note moved to Trash",
     deleted: "Note deleted",
@@ -14,6 +16,7 @@ export const undoMessages = {
     tagDeleted: "Tag “{name}” deleted",
   },
   it: {
+    imported: "{count} nota importata | {count} note importate",
     action: "Annulla",
     trashed: "Nota spostata nel cestino",
     deleted: "Nota eliminata",
@@ -21,6 +24,7 @@ export const undoMessages = {
     tagDeleted: "Etichetta «{name}» eliminata",
   },
   es: {
+    imported: "{count} nota importada | {count} notas importadas",
     action: "Deshacer",
     trashed: "Nota movida a la papelera",
     deleted: "Nota eliminada",
@@ -28,6 +32,7 @@ export const undoMessages = {
     tagDeleted: "Etiqueta «{name}» eliminada",
   },
   de: {
+    imported: "{count} Notiz importiert | {count} Notizen importiert",
     action: "Rückgängig",
     trashed: "Notiz in den Papierkorb verschoben",
     deleted: "Notiz gelöscht",

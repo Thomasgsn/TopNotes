@@ -556,3 +556,41 @@ test("notes in the trash for more than 30 days are purged", async (context) => {
   await nextTick();
   assert.deepEqual(ids(), ["note-1"]);
 });
+
+test("importing merges notes and tags without overwriting, and can be undone", async () => {
+  const { store } = mountLibrary();
+  const existing = { ...store.notes.value[0] };
+  const result = store.importNotes(
+    [
+      existing,
+      { ...existing, title: "Version importée" },
+      { ...existing, id: "new", title: "Nouvelle", tag: "imported" },
+      { ...existing, id: "other", title: "Autre", tag: "same-name" },
+    ],
+    [
+      { id: "imported", name: "Importée", color: "#123456" },
+      { id: "same-name", name: "travail", color: "#654321" },
+    ],
+  );
+  assert.deepEqual(result, { added: 3, skipped: 1 });
+  await nextTick();
+  assert.equal(store.notes.value.length, 4);
+  assert.equal(store.notes.value.find((item) => item.id === "note-1").title, "Note");
+  assert.ok(
+    store.notes.value.some((item) => item.title === "Version importée" && item.id !== "note-1"),
+  );
+  assert.ok(store.tags.value.some((tag) => tag.id === "imported"));
+  assert.equal(
+    store.tags.value.some((tag) => tag.id === "same-name"),
+    false,
+  );
+  assert.equal(store.notes.value.find((item) => item.id === "other").tag, "work");
+
+  store.undo();
+  await nextTick();
+  assert.equal(store.notes.value.length, 1);
+  assert.equal(
+    store.tags.value.some((tag) => tag.id === "imported"),
+    false,
+  );
+});

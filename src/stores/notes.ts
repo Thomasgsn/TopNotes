@@ -310,6 +310,71 @@ export function useNotesStore({
     notes.value.push(...removed.filter((note) => !present.has(note.id)));
   }
 
+  /**
+   * Adds imported notes and tags without replacing anything: tags reuse a local
+   * tag with the same id or name, identical notes are skipped and changed notes
+   * with an existing id are added as copies.
+   */
+  function importNotes(
+    importedNotes: readonly Note[],
+    importedTags: readonly NoteTag[],
+  ): { added: number; skipped: number } {
+    const nameKey = (tag: NoteTag) => tagName(tag).trim().normalize("NFKC").toLocaleLowerCase();
+    const tagIds = new Map<TagId, TagId>();
+    const addedTags: NoteTag[] = [];
+    for (const tag of importedTags) {
+      const local =
+        tags.value.find((candidate) => candidate.id === tag.id) ??
+        tags.value.find((candidate) => nameKey(candidate) === nameKey(tag));
+      if (local) {
+        tagIds.set(tag.id, local.id);
+      } else {
+        const added = { ...tag };
+        tags.value.push(added);
+        addedTags.push(added);
+        tagIds.set(tag.id, tag.id);
+      }
+    }
+
+    const addedNotes: Note[] = [];
+    let skipped = 0;
+    for (const note of importedNotes) {
+      const local = notes.value.find((candidate) => candidate.id === note.id);
+      if (
+        local &&
+        local.title === note.title &&
+        local.body === note.body &&
+        local.updatedAt === note.updatedAt
+      ) {
+        skipped += 1;
+        continue;
+      }
+      const tag = note.tag ? (tagIds.get(note.tag) ?? note.tag) : null;
+      const copy: Note = {
+        ...note,
+        id: local ? createId() : note.id,
+        tag: tags.value.some((candidate) => candidate.id === tag) ? tag : null,
+      };
+      notes.value.push(copy);
+      addedNotes.push(copy);
+    }
+
+    if (addedNotes.length || addedTags.length) {
+      const noteIds = new Set(addedNotes.map((note) => note.id));
+      const tagIdsToRemove = new Set(addedTags.map((tag) => tag.id));
+      offerUndo(
+        "undo.imported",
+        () => {
+          notes.value = notes.value.filter((note) => !noteIds.has(note.id));
+          tags.value = tags.value.filter((tag) => !tagIdsToRemove.has(tag.id));
+        },
+        { count: addedNotes.length },
+      );
+      markDirty();
+    }
+    return { added: addedNotes.length, skipped };
+  }
+
   function requestDeleteTag(id: TagId): void {
     pendingTagDeletionId.value = id;
   }
@@ -749,6 +814,7 @@ export function useNotesStore({
     convertLegacyBody,
     emptyTrashPending: readonly(emptyTrashPending),
     forceQuit,
+    importNotes,
     formatRelativeTime,
     newNote,
     noteCounts,

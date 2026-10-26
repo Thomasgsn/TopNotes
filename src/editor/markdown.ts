@@ -132,7 +132,12 @@ function extractNoteText(note: Pick<Note, "body" | "bodyFormat">): string {
   if (note.bodyFormat === "markdown") {
     return documentText(markdown.parse(note.body)).replace(/\s+/g, " ").trim();
   }
-  if (typeof document === "undefined") return note.body.replace(/<[^>]+>/g, " ").trim();
+  if (typeof document === "undefined") {
+    return note.body
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
   const template = document.createElement("template");
   template.innerHTML = note.body;
   return (template.content.textContent ?? "").replace(/\s+/g, " ").trim();

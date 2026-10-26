@@ -1,5 +1,6 @@
 <script setup lang="ts">
-  import { CalendarDays, Languages } from "@lucide/vue";
+  import { ref } from "vue";
+  import { CalendarDays, FolderInput, Languages } from "@lucide/vue";
   import { useI18n } from "vue-i18n";
   import { localeNames, supportedLocales, type AppLocale } from "@/app/i18n";
   import Dialog from "../base/Dialog.vue";
@@ -9,16 +10,28 @@
     nativeRuntime: boolean;
     autostartEnabled: boolean;
     autostartBusy: boolean;
+    exchangeStatus: string;
+    exchangeBusy: boolean;
   }>();
 
   const emit = defineEmits<{
     close: [];
     setLocale: [locale: AppLocale];
     toggleAutostart: [];
+    exportNotes: [format: "json" | "markdown"];
+    importFile: [file: File];
   }>();
 
   const { t } = useI18n();
   const BLOCK = "settings";
+  const importInput = ref<HTMLInputElement | null>(null);
+
+  function onImportChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) emit("importFile", file);
+    input.value = "";
+  }
 
   function onLocaleChange(event: Event): void {
     emit("setLocale", (event.target as HTMLSelectElement).value as AppLocale);
@@ -75,6 +88,52 @@
           <span :class="`${BLOCK}__switch-thumb`"></span>
         </button>
       </div>
+
+      <div :class="[`${BLOCK}__row`, `${BLOCK}__row--stacked`]">
+        <div :class="`${BLOCK}__icon`"><FolderInput :size="17" /></div>
+        <div :class="`${BLOCK}__copy`">
+          <span :class="`${BLOCK}__label`">{{ t("exchange.title") }}</span>
+          <p :class="`${BLOCK}__help`">{{ t("exchange.help") }}</p>
+          <div :class="`${BLOCK}__actions`">
+            <button
+              :class="`${BLOCK}__action`"
+              type="button"
+              :disabled="exchangeBusy"
+              @click="emit('exportNotes', 'json')"
+            >
+              {{ t("exchange.exportJson") }}
+            </button>
+            <button
+              :class="`${BLOCK}__action`"
+              type="button"
+              :disabled="exchangeBusy"
+              @click="emit('exportNotes', 'markdown')"
+            >
+              {{ t("exchange.exportMarkdown") }}
+            </button>
+            <button
+              :class="`${BLOCK}__action`"
+              type="button"
+              :disabled="exchangeBusy"
+              @click="importInput?.click()"
+            >
+              {{ t("exchange.import") }}
+            </button>
+            <input
+              ref="importInput"
+              :class="`${BLOCK}__file`"
+              type="file"
+              accept="application/json,.json"
+              tabindex="-1"
+              aria-hidden="true"
+              @change="onImportChange"
+            />
+          </div>
+          <p v-if="exchangeStatus" :class="`${BLOCK}__status`" role="status">
+            {{ exchangeStatus }}
+          </p>
+        </div>
+      </div>
     </div>
   </Dialog>
 </template>
@@ -90,6 +149,47 @@
       align-items: center;
       gap: 11px;
       border-bottom: 1px solid var(--line);
+    }
+
+    &__row--stacked {
+      align-items: start;
+    }
+
+    &__actions {
+      margin-top: 9px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    &__action {
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--text);
+      background: var(--list);
+      cursor: pointer;
+      font-size: 11px;
+
+      &:hover:not(:disabled) {
+        background: var(--hover);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+    }
+
+    &__file {
+      display: none;
+    }
+
+    &__status {
+      margin: 8px 0 0;
+      color: var(--text);
+      font-size: 10px;
+      overflow-wrap: anywhere;
     }
 
     &__icon {
