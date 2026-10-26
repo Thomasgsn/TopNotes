@@ -321,7 +321,7 @@
       </div>
 
       <footer v-if="!detached" class="editor__footer">
-        <div class="editor__format-bar" aria-label="Text formatting">
+        <div class="editor__format-bar" role="toolbar" :aria-label="t('actions.formatting')">
           <button
             class="editor__format-button"
             type="button"

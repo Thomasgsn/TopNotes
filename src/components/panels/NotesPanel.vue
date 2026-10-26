@@ -110,6 +110,7 @@
         type="button"
         class="notes__row"
         :class="{ 'notes__row--selected': selectedNoteId === note.id }"
+        :aria-current="selectedNoteId === note.id ? 'true' : undefined"
         @click="emit('selectNote', note)"
       >
         <span class="notes__heading">

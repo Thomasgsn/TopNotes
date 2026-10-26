@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { onBeforeUnmount, onMounted, ref, useId } from "vue";
+  import { nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from "vue";
 
   type PopoverVariant = "info" | "actions";
 
@@ -26,8 +26,42 @@
   }
 
   function closeOnEscape(event: KeyboardEvent): void {
-    if (props.open && event.key === "Escape") emit("close");
+    if (!props.open || event.key !== "Escape") return;
+    const focusInside = rootElement.value?.contains(document.activeElement);
+    emit("close");
+    // Give focus back to the trigger rather than losing it to the document.
+    if (focusInside) rootElement.value?.querySelector<HTMLElement>("button")?.focus();
   }
+
+  function menuItems(): HTMLElement[] {
+    return Array.from(
+      rootElement.value?.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)') ?? [],
+    );
+  }
+
+  // Menus follow the WAI-ARIA pattern: first item focused, arrows to move.
+  function navigateMenu(event: KeyboardEvent): void {
+    if (props.variant !== "actions") return;
+    const items = menuItems();
+    if (!items.length) return;
+    const current = items.indexOf(document.activeElement as HTMLElement);
+    const next: Record<string, number> = {
+      ArrowDown: (current + 1) % items.length,
+      ArrowUp: (current - 1 + items.length) % items.length,
+      Home: 0,
+      End: items.length - 1,
+    };
+    if (!(event.key in next)) return;
+    event.preventDefault();
+    items[next[event.key]]?.focus();
+  }
+
+  watch(
+    () => props.open,
+    (open) => {
+      if (open && props.variant === "actions") void nextTick(() => menuItems()[0]?.focus());
+    },
+  );
 
   onMounted(() => {
     document.addEventListener("pointerdown", closeOnOutsidePointer);
@@ -50,6 +84,7 @@
       :role="variant === 'actions' ? 'menu' : 'dialog'"
       :aria-label="label"
       @click.stop
+      @keydown="navigateMenu"
     >
       <slot />
     </div>
