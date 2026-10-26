@@ -1,6 +1,7 @@
 import type { JSONContent } from "@tiptap/core";
 import { Extension, InputRule } from "@tiptap/core";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
+import Paragraph from "@tiptap/extension-paragraph";
 import { Markdown, MarkdownManager } from "@tiptap/markdown";
 import StarterKit from "@tiptap/starter-kit";
 import { Plugin } from "@tiptap/pm/state";
@@ -20,6 +21,27 @@ const MarkdownTaskItem = TaskItem.extend({
         },
       }),
     ];
+  },
+});
+
+// @tiptap/markdown only escapes inline delimiters. Text that starts a line with a
+// list, heading, rule or setext marker would reopen as that block, so escape it.
+export function escapeBlockSyntax(markdown: string): string {
+  return markdown
+    .split("\n")
+    .map((line) =>
+      line
+        .replace(/^( {0,3})([-+*]|#{1,6})(?=\s|$)/, "$1\\$2")
+        .replace(/^( {0,3})(-)(?=(?:\s*-){2,}\s*$)/, "$1\\$2")
+        .replace(/^( {0,3}\d{1,9})([.)])(?=\s|$)/, "$1\\$2")
+        .replace(/^( {0,3})(=+\s*)$/, "$1\\$2"),
+    )
+    .join("\n");
+}
+
+const MarkdownParagraph = Paragraph.extend({
+  renderMarkdown(node, helpers, context) {
+    return escapeBlockSyntax(this.parent?.(node, helpers, context) ?? "");
   },
 });
 
@@ -64,7 +86,8 @@ const SlackShortcuts = Extension.create<{ openLink: () => void }>({
 
 export function markdownExtensions(options: { openLink?: () => void } = {}) {
   return [
-    StarterKit.configure({ link: { openOnClick: false } }),
+    StarterKit.configure({ paragraph: false, link: { openOnClick: false } }),
+    MarkdownParagraph,
     TaskList,
     MarkdownTaskItem.configure({ nested: true }),
     Markdown,

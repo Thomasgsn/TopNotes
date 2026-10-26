@@ -262,3 +262,54 @@ test("the shortcuts dialog has translations for every registered shortcut", () =
       assert.ok(messages.shortcuts[shortcut.id]);
   }
 });
+
+test("plain text that looks like block Markdown reopens as the same plain text", () => {
+  const literals = [
+    "- pas une liste",
+    "+ pas une liste",
+    "* pas une liste",
+    "1. pas une liste",
+    "12) pas une liste",
+    "# pas un titre",
+    "###### pas un titre",
+    "---",
+    "- - -",
+    "===",
+    "Prix : 5 - 3 = 2 # ok",
+  ];
+  for (const text of literals) {
+    const editor = createEditor("");
+    editor.commands.setContent({
+      type: "doc",
+      content: [{ type: "paragraph", content: [{ type: "text", text }] }],
+    });
+    const reopened = createEditor(editor.getMarkdown());
+    assert.deepEqual(reopened.getJSON(), editor.getJSON(), text);
+  }
+});
+
+test("literal block markers after a line break stay plain text", () => {
+  const editor = createEditor("");
+  editor.commands.setContent({
+    type: "doc",
+    content: [
+      {
+        type: "paragraph",
+        content: [
+          { type: "text", text: "Titre" },
+          { type: "hardBreak" },
+          { type: "text", text: "- suite" },
+          { type: "hardBreak" },
+          { type: "text", text: "===" },
+        ],
+      },
+    ],
+  });
+  const reopened = createEditor(editor.getMarkdown());
+  assert.deepEqual(reopened.getJSON(), editor.getJSON());
+});
+
+test("real lists, headings and rules keep their Markdown syntax", () => {
+  const markdown = "# Titre\n\n- un\n- deux\n\n1. premier\n\n---\n\nTexte";
+  assert.equal(createEditor(markdown).getMarkdown(), markdown);
+});
