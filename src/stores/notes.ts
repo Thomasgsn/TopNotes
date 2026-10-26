@@ -7,7 +7,7 @@ import { noteText } from "../editor/markdown.ts";
 import { defaultTags, tagName as displayTagName, validateTagName } from "../tags.ts";
 import type { TagError } from "@/app/tags";
 import type { Persistence } from "@/app/persistence";
-import type { FilterId, Note, NoteTag, TagId } from "@/app/types";
+import type { FilterId, Note, NoteTag, SortOrder, TagId } from "@/app/types";
 
 const SAVE_RETRY_DELAYS = [2_000, 5_000, 15_000, 30_000];
 const CLOCK_INTERVAL = 30_000;
@@ -116,6 +116,7 @@ interface NotesStoreOptions {
   openSettings?: () => void;
   openShortcuts?: () => void;
   quitApp?: () => Promise<void>;
+  sortOrder?: Readonly<Ref<SortOrder>>;
 }
 
 export function useNotesStore({
@@ -130,6 +131,7 @@ export function useNotesStore({
   openSettings = () => {},
   openShortcuts = () => {},
   quitApp = () => invoke("quit_app"),
+  sortOrder = ref("updated"),
 }: NotesStoreOptions) {
   const notes = ref<Note[]>([]);
   const tags = ref<NoteTag[]>(initialTags ?? defaultTags());
@@ -188,8 +190,19 @@ export function useNotesStore({
           .toLocaleLowerCase(locale.value)
           .includes(query);
       })
-      .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.updatedAt - a.updatedAt);
+      .sort((a, b) => Number(b.pinned) - Number(a.pinned) || compareNotes(a, b));
   });
+
+  function compareNotes(a: Note, b: Note): number {
+    if (sortOrder.value === "created") return b.createdAt - a.createdAt;
+    if (sortOrder.value === "title") {
+      // Untitled notes go last instead of first.
+      if (!a.title.trim() || !b.title.trim())
+        return Number(!a.title.trim()) - Number(!b.title.trim());
+      return a.title.localeCompare(b.title, locale.value, { numeric: true, sensitivity: "base" });
+    }
+    return b.updatedAt - a.updatedAt;
+  }
 
   const selectedNote = computed(
     () => notes.value.find((note) => note.id === selectedNoteId.value) ?? null,

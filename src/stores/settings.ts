@@ -3,6 +3,7 @@ import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { onMounted, readonly, ref } from "vue";
 import type { AppLocale } from "@/app/i18n";
 import type { PersistedSettings, Persistence } from "@/app/persistence";
+import type { SortOrder } from "@/app/types";
 
 interface LocaleRef {
   value: string;
@@ -20,6 +21,7 @@ export function useSettingsStore({ initialSettings, locale, persistence }: Setti
   const autostartBusy = ref(false);
   const alwaysOnTop = ref(initialSettings?.alwaysOnTop ?? true);
   const alwaysOnTopBusy = ref(false);
+  const sortOrder = ref<SortOrder>(initialSettings?.sortOrder ?? "updated");
   const nativeRuntime = isTauri();
   let autostartInitialized = initialSettings?.autostartInitialized ?? false;
 
@@ -28,6 +30,14 @@ export function useSettingsStore({ initialSettings, locale, persistence }: Setti
       locale: locale.value as AppLocale,
       alwaysOnTop: alwaysOnTop.value,
       autostartInitialized,
+      sortOrder: sortOrder.value,
+    });
+  }
+
+  async function setSortOrder(nextSortOrder: SortOrder): Promise<void> {
+    sortOrder.value = nextSortOrder;
+    await persistSettings().catch((error: unknown) => {
+      console.error("TopNotes could not save the sort order.", error);
     });
   }
 
@@ -139,6 +149,8 @@ export function useSettingsStore({ initialSettings, locale, persistence }: Setti
     openSettings,
     setLocale,
     settingsVisible: readonly(settingsVisible),
+    setSortOrder,
+    sortOrder: readonly(sortOrder),
     toggleAlwaysOnTop,
     toggleAutostart,
   };

@@ -27,6 +27,12 @@ const messages = {
     tagManager: tagMessages.fr,
     confirm: confirmMessages.fr,
     undo: undoMessages.fr,
+    sort: {
+      label: "Trier par",
+      updated: "Date de modification",
+      created: "Date de création",
+      title: "Titre",
+    },
     app: {
       name: "TopNotes",
       library: "Bibliothèque",
@@ -134,6 +140,12 @@ const messages = {
     tagManager: tagMessages.en,
     confirm: confirmMessages.en,
     undo: undoMessages.en,
+    sort: {
+      label: "Sort by",
+      updated: "Date modified",
+      created: "Date created",
+      title: "Title",
+    },
     app: {
       name: "TopNotes",
       library: "Library",
@@ -235,6 +247,12 @@ const messages = {
     tagManager: tagMessages.it,
     confirm: confirmMessages.it,
     undo: undoMessages.it,
+    sort: {
+      label: "Ordina per",
+      updated: "Data di modifica",
+      created: "Data di creazione",
+      title: "Titolo",
+    },
     app: {
       name: "TopNotes",
       library: "Libreria",
@@ -335,6 +353,12 @@ const messages = {
     tagManager: tagMessages.es,
     confirm: confirmMessages.es,
     undo: undoMessages.es,
+    sort: {
+      label: "Ordenar por",
+      updated: "Fecha de modificación",
+      created: "Fecha de creación",
+      title: "Título",
+    },
     app: {
       name: "TopNotes",
       library: "Biblioteca",
@@ -434,6 +458,12 @@ const messages = {
     tagManager: tagMessages.de,
     confirm: confirmMessages.de,
     undo: undoMessages.de,
+    sort: {
+      label: "Sortieren nach",
+      updated: "Änderungsdatum",
+      created: "Erstellungsdatum",
+      title: "Titel",
+    },
     app: {
       name: "TopNotes",
       library: "Mediathek",

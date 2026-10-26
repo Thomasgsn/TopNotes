@@ -23,6 +23,12 @@
   const shortcutsVisible = ref(false);
   const { detached, busy: noteWindowBusy, detach, attach } = useNoteWindow();
 
+  const settingsStore = useSettingsStore({
+    initialSettings: props.initialData.settings,
+    locale,
+    persistence: appPersistence,
+  });
+
   const notesStore = useNotesStore({
     initialNotes: props.initialData.notes,
     initialTags: props.initialData.tags,
@@ -32,16 +38,11 @@
     focusSearch: () => void attach().then(() => notesPanel.value?.focusSearch()),
     focusTitle: () => document.querySelector<HTMLInputElement>(".editor__title")?.focus(),
     selectionLocked: detached,
+    sortOrder: settingsStore.sortOrder,
     openSettings: () => settingsStore.openSettings(),
     openShortcuts: () => {
       shortcutsVisible.value = true;
     },
-  });
-
-  const settingsStore = useSettingsStore({
-    initialSettings: props.initialData.settings,
-    locale,
-    persistence: appPersistence,
   });
 
   const {
@@ -104,6 +105,8 @@
     nativeRuntime,
     openSettings,
     setLocale,
+    setSortOrder,
+    sortOrder,
     settingsVisible,
     toggleAlwaysOnTop,
     toggleAutostart,
@@ -151,10 +154,12 @@
       :tags="tags"
       :tag-name="tagName"
       :can-empty-trash="activeFilter === 'trash' && noteCounts.trash > 0"
+      :sort-order="sortOrder"
       @select-note="selectNote"
       @new-note="newNote"
       @update-query="setSearchQuery"
       @empty-trash="requestEmptyTrash"
+      @set-sort-order="setSortOrder"
     />
     <EditorPanel
       :note="selectedNote"

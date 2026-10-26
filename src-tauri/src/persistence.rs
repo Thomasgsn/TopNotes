@@ -67,6 +67,18 @@ pub(crate) struct Settings {
     locale: AppLocale,
     always_on_top: bool,
     autostart_initialized: bool,
+    // Added after the first release: older files load with the default.
+    #[serde(default)]
+    sort_order: SortOrder,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "lowercase")]
+enum SortOrder {
+    #[default]
+    Updated,
+    Created,
+    Title,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -400,6 +412,7 @@ mod tests {
             locale: AppLocale::Fr,
             always_on_top: false,
             autostart_initialized: true,
+            sort_order: SortOrder::Updated,
         }
     }
 
@@ -565,6 +578,24 @@ mod tests {
             fs::read_to_string(directory.0.join(DATA_FILE_NAME)).unwrap(),
             newer
         );
+    }
+
+    #[test]
+    fn settings_without_a_sort_order_use_the_default_and_keep_a_chosen_one() {
+        let legacy: Settings = serde_json::from_str(
+            r#"{"locale":"fr","alwaysOnTop":true,"autostartInitialized":true}"#,
+        )
+        .unwrap();
+        assert_eq!(legacy.sort_order, SortOrder::Updated);
+
+        let chosen: Settings = serde_json::from_str(
+            r#"{"locale":"fr","alwaysOnTop":true,"autostartInitialized":true,"sortOrder":"title"}"#,
+        )
+        .unwrap();
+        assert_eq!(chosen.sort_order, SortOrder::Title);
+        assert!(serde_json::to_string(&chosen)
+            .unwrap()
+            .contains(r#""sortOrder":"title""#));
     }
 
     #[test]

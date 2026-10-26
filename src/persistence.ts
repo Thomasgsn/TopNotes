@@ -1,7 +1,8 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import type { AppLocale } from "./i18n";
 import { isNoteTag } from "./tags.ts";
-import type { Note, NoteTag } from "./types";
+import { sortOrders } from "./types/SortOrder.ts";
+import type { Note, NoteTag, SortOrder } from "./types";
 
 const SCHEMA_VERSION = 1;
 const DATA_STORAGE_KEY = "topnotes.data.v1";
@@ -24,6 +25,8 @@ export interface PersistedSettings {
   locale: AppLocale;
   alwaysOnTop: boolean;
   autostartInitialized: boolean;
+  // Optional in stored data: added after the first release.
+  sortOrder: SortOrder;
 }
 
 export interface PersistedAppData {
@@ -86,6 +89,9 @@ function normalizeSettings(value: unknown): PersistedSettings | null {
     locale: candidate.locale as AppLocale,
     alwaysOnTop: candidate.alwaysOnTop,
     autostartInitialized: candidate.autostartInitialized,
+    sortOrder: sortOrders.includes(candidate.sortOrder as SortOrder)
+      ? (candidate.sortOrder as SortOrder)
+      : "updated",
   };
 }
 
@@ -145,6 +151,7 @@ function loadLegacyData(): PersistedAppData | null {
         locale: locale ?? browserLocale(),
         alwaysOnTop: alwaysOnTopValue === null ? true : alwaysOnTopValue === "true",
         autostartInitialized: autostartValue === "true",
+        sortOrder: "updated" as const,
       }
     : null;
 

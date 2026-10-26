@@ -482,3 +482,35 @@ test("destructive actions can be undone right after", async (context) => {
   mock.timers.tick(8000);
   assert.equal(store.undoable.value, null);
 });
+
+test("notes can be sorted by modification date, creation date or title", async () => {
+  const sortOrder = ref("updated");
+  const note = (id, title, createdAt, updatedAt) => ({
+    id,
+    title,
+    body: "",
+    bodyFormat: "markdown",
+    tag: null,
+    pinned: false,
+    archived: false,
+    trashed: false,
+    createdAt,
+    updatedAt,
+  });
+  const { store } = mountLibrary({
+    initialNotes: [
+      note("b", "Banane", 3, 10),
+      note("a", "abricot", 1, 30),
+      note("c", "", 2, 20),
+      { ...note("p", "Zèbre", 0, 0), pinned: true },
+    ],
+    sortOrder,
+  });
+  await nextTick();
+  const ids = () => store.visibleNotes.value.map((item) => item.id);
+  assert.deepEqual(ids(), ["p", "a", "c", "b"]);
+  sortOrder.value = "created";
+  assert.deepEqual(ids(), ["p", "b", "c", "a"]);
+  sortOrder.value = "title";
+  assert.deepEqual(ids(), ["p", "a", "b", "c"]);
+});

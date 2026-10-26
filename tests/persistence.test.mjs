@@ -89,3 +89,25 @@ test("unreadable browser data is kept aside before starting fresh", async () => 
   assert.equal(keys.length, 1);
   assert.equal(localStorage.getItem(keys[0]), "{not json");
 });
+
+test("settings without a sort order load with the default one", async () => {
+  const { BrowserPersistence } = await import("../src/persistence.ts");
+  const settings = { locale: "fr", alwaysOnTop: true, autostartInitialized: true };
+  localStorage.setItem(
+    "topnotes.data.v1",
+    JSON.stringify({ schemaVersion: 1, notes: [], tags: null, settings }),
+  );
+  const loaded = await new BrowserPersistence().load();
+  assert.equal(loaded.settings.sortOrder, "updated");
+
+  localStorage.setItem(
+    "topnotes.data.v1",
+    JSON.stringify({
+      schemaVersion: 1,
+      notes: [],
+      tags: null,
+      settings: { ...settings, sortOrder: "title" },
+    }),
+  );
+  assert.equal((await new BrowserPersistence().load()).settings.sortOrder, "title");
+});

@@ -1,10 +1,12 @@
 <script setup lang="ts">
-  import { ChevronDown, NotebookTabs, Pin, Search, SquarePen, Trash2, X } from "@lucide/vue";
+  import { Check, ChevronDown, NotebookTabs, Pin, Search, SquarePen, Trash2, X } from "@lucide/vue";
   import { nextTick, ref } from "vue";
   import { useI18n } from "vue-i18n";
   import { isMacPlatform, shortcutLabel } from "@/app/editor/shortcuts";
-  import type { Note, NoteTag } from "@/app/types";
+  import { sortOrders } from "@/app/types/SortOrder";
+  import type { Note, NoteTag, SortOrder } from "@/app/types";
   import IconButton from "../base/IconButton.vue";
+  import Popover from "../base/Popover.vue";
 
   const props = defineProps<{
     title: string;
@@ -16,6 +18,7 @@
     tags: NoteTag[];
     tagName: (tag: NoteTag) => string;
     canEmptyTrash: boolean;
+    sortOrder: SortOrder;
   }>();
 
   const emit = defineEmits<{
@@ -23,10 +26,17 @@
     newNote: [];
     updateQuery: [query: string];
     emptyTrash: [];
+    setSortOrder: [sortOrder: SortOrder];
   }>();
 
   const { t } = useI18n();
   const searchVisible = ref(false);
+  const sortVisible = ref(false);
+
+  function chooseSortOrder(order: SortOrder): void {
+    emit("setSortOrder", order);
+    sortVisible.value = false;
+  }
   const searchElement = ref<HTMLInputElement | null>(null);
 
   function tagLabel(id: string): string {
@@ -55,10 +65,42 @@
 <template>
   <section class="notes" :aria-label="t('app.notes')">
     <header class="notes__titlebar" data-tauri-drag-region>
-      <div v-if="!searchVisible" class="notes__title">
-        <span class="notes__title-text">{{ title }}</span>
-        <ChevronDown class="notes__title-icon" :size="13" />
-      </div>
+      <Popover
+        v-if="!searchVisible"
+        :open="sortVisible"
+        variant="actions"
+        align="start"
+        :label="t('sort.label')"
+        @close="sortVisible = false"
+      >
+        <template #trigger="{ panelId }">
+          <button
+            class="notes__title"
+            type="button"
+            aria-haspopup="menu"
+            :aria-expanded="sortVisible"
+            :aria-controls="panelId"
+            :title="t('sort.label')"
+            @click.stop="sortVisible = !sortVisible"
+          >
+            <span class="notes__title-text">{{ title }}</span>
+            <ChevronDown class="notes__title-icon" :size="13" />
+          </button>
+        </template>
+        <button
+          v-for="order in sortOrders"
+          :key="order"
+          class="popover__action"
+          type="button"
+          role="menuitemradio"
+          :aria-checked="order === sortOrder"
+          @click="chooseSortOrder(order)"
+        >
+          <Check v-if="order === sortOrder" :size="14" />
+          <span v-else class="notes__sort-spacer"></span>
+          <span>{{ t(`sort.${order}`) }}</span>
+        </button>
+      </Popover>
       <div v-else class="notes__search">
         <Search class="notes__search-icon" :size="14" />
         <input
@@ -166,15 +208,30 @@
       -webkit-app-region: drag;
     }
 
+    &__titlebar > .popover {
+      min-width: 0;
+    }
+
     &__title {
       min-width: 0;
+      max-width: 100%;
+      padding: 0;
       display: flex;
       align-items: center;
       gap: 5px;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      -webkit-app-region: no-drag;
       color: var(--text);
       font-size: 15px;
       font-weight: 680;
       letter-spacing: -0.01em;
+    }
+
+    &__sort-spacer {
+      width: 14px;
+      flex: 0 0 14px;
     }
 
     &__title-text {

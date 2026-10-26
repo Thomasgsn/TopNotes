@@ -7,6 +7,7 @@
     open: boolean;
     variant: PopoverVariant;
     label: string;
+    align?: "start" | "end";
   }>();
 
   const emit = defineEmits<{
@@ -35,7 +36,9 @@
 
   function menuItems(): HTMLElement[] {
     return Array.from(
-      rootElement.value?.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)') ?? [],
+      rootElement.value?.querySelectorAll<HTMLElement>(
+        '[role="menuitem"]:not(:disabled), [role="menuitemradio"]:not(:disabled)',
+      ) ?? [],
     );
   }
 
@@ -80,7 +83,11 @@
     <div
       v-if="open"
       :id="panelId"
-      :class="[`popover__panel`, `popover__panel--${variant}`]"
+      :class="[
+        `popover__panel`,
+        `popover__panel--${variant}`,
+        { [`popover__panel--start`]: align === 'start' },
+      ]"
       :role="variant === 'actions' ? 'menu' : 'dialog'"
       :aria-label="label"
       @click.stop
@@ -117,6 +124,11 @@
       &--actions {
         width: 205px;
         padding: 5px;
+      }
+
+      &--start {
+        right: auto;
+        left: 0;
       }
     }
 
