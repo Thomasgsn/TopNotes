@@ -435,3 +435,50 @@ test("navigation history keeps only the most recent entries", async () => {
   // 100 kept entries: going back stops 99 steps away, an odd distance.
   assert.notEqual(store.selectedNote.value.id, last.id);
 });
+
+test("destructive actions can be undone right after", async (context) => {
+  context.after(() => mock.timers.reset());
+  mock.timers.enable({ apis: ["setTimeout"] });
+  const { store } = mountLibrary();
+  const original = { ...store.selectedNote.value };
+
+  store.togglePin();
+  store.trashOrDeleteNote();
+  assert.equal(store.undoable.value.message, "undo.trashed");
+  store.undo();
+  await nextTick();
+  assert.equal(store.undoable.value, null);
+  assert.equal(store.selectedNote.value.trashed, false);
+  assert.equal(store.selectedNote.value.pinned, true);
+
+  store.trashOrDeleteNote();
+  store.selectFilter("trash");
+  await nextTick();
+  store.trashOrDeleteNote();
+  store.confirmDelete();
+  await nextTick();
+  assert.equal(store.noteCounts.value.trash, 0);
+  store.undo();
+  await nextTick();
+  assert.equal(store.noteCounts.value.trash, 1);
+  assert.equal(store.visibleNotes.value[0].body, original.body);
+
+  store.requestEmptyTrash();
+  store.confirmEmptyTrash();
+  store.undo();
+  await nextTick();
+  assert.equal(store.noteCounts.value.trash, 1);
+
+  store.restoreNote();
+  store.requestDeleteTag("work");
+  store.confirmDeleteTag();
+  assert.equal(store.undoable.value.message, "undo.tagDeleted");
+  store.undo();
+  await nextTick();
+  assert.ok(store.tags.value.some((tag) => tag.id === "work"));
+  assert.equal(store.notes.value.find((note) => note.id === "note-1").tag, "work");
+
+  store.trashOrDeleteNote();
+  mock.timers.tick(8000);
+  assert.equal(store.undoable.value, null);
+});

@@ -12,6 +12,12 @@ import type { FilterId, Note, NoteTag, TagId } from "@/app/types";
 const SAVE_RETRY_DELAYS = [2_000, 5_000, 15_000, 30_000];
 const CLOCK_INTERVAL = 30_000;
 const HISTORY_LIMIT = 100;
+const UNDO_DURATION = 8_000;
+
+export interface Undoable {
+  message: string;
+  params: Record<string, string | number>;
+}
 
 export function createId(): string {
   return (
@@ -140,6 +146,9 @@ export function useNotesStore({
   const pendingDeletionId = ref<string | null>(null);
   const pendingTagDeletionId = ref<TagId | null>(null);
   const emptyTrashPending = ref(false);
+  const undoable = ref<Undoable | null>(null);
+  let undoAction: (() => void) | null = null;
+  let undoTimer: ReturnType<typeof setTimeout> | undefined;
   const nativeRuntime = isTauri();
 
   let initialized = false;
@@ -259,6 +268,33 @@ export function useNotesStore({
     return { tag, noteCount: notes.value.filter((note) => note.tag === tag.id).length };
   });
 
+  function offerUndo(message: string, action: () => void, params: Undoable["params"] = {}): void {
+    clearUndo();
+    undoable.value = { message, params };
+    undoAction = action;
+    undoTimer = setTimeout(clearUndo, UNDO_DURATION);
+  }
+
+  function clearUndo(): void {
+    if (undoTimer) clearTimeout(undoTimer);
+    undoTimer = undefined;
+    undoable.value = null;
+    undoAction = null;
+  }
+
+  function undo(): void {
+    const action = undoAction;
+    clearUndo();
+    if (!action) return;
+    action();
+    markDirty();
+  }
+
+  function reinsertNotes(removed: Note[]): void {
+    const present = new Set(notes.value.map((note) => note.id));
+    notes.value.push(...removed.filter((note) => !present.has(note.id)));
+  }
+
   function requestDeleteTag(id: TagId): void {
     pendingTagDeletionId.value = id;
   }
@@ -274,10 +310,26 @@ export function useNotesStore({
   }
 
   function deleteTag(id: TagId): void {
-    tags.value = tags.value.filter((tag) => tag.id !== id);
+    const index = tags.value.findIndex((tag) => tag.id === id);
+    const tag = tags.value[index];
+    if (!tag) return;
+    const taggedIds = new Set<string>();
+    tags.value = tags.value.filter((candidate) => candidate.id !== id);
     for (const note of notes.value) {
-      if (note.tag === id) note.tag = null;
+      if (note.tag !== id) continue;
+      note.tag = null;
+      taggedIds.add(note.id);
     }
+    offerUndo(
+      "undo.tagDeleted",
+      () => {
+        tags.value.splice(Math.min(index, tags.value.length), 0, tag);
+        for (const note of notes.value) {
+          if (taggedIds.has(note.id) && note.tag === null) note.tag = id;
+        }
+      },
+      { name: tagName(tag) },
+    );
     if (activeFilter.value === `tag:${id}`) activeFilter.value = "all";
     markDirty();
   }
@@ -477,16 +529,25 @@ export function useNotesStore({
     }
     // Trashed notes are hidden from every other view and count, so they keep
     // their pin and archive state to get it back when restored.
+    const previousUpdatedAt = note.updatedAt;
     note.trashed = true;
     note.updatedAt = Date.now();
+    offerUndo("undo.trashed", () => {
+      const current = notes.value.find((candidate) => candidate.id === note.id);
+      if (!current) return;
+      current.trashed = false;
+      current.updatedAt = previousUpdatedAt;
+    });
     markDirty();
   }
 
   function confirmDelete(): void {
     const id = pendingDeletionId.value;
     pendingDeletionId.value = null;
-    if (!id) return;
+    const removed = notes.value.find((candidate) => candidate.id === id);
+    if (!removed) return;
     notes.value = notes.value.filter((candidate) => candidate.id !== id);
+    offerUndo("undo.deleted", () => reinsertNotes([removed]));
     markDirty();
   }
 
@@ -500,7 +561,9 @@ export function useNotesStore({
 
   function confirmEmptyTrash(): void {
     emptyTrashPending.value = false;
+    const removed = notes.value.filter((note) => note.trashed);
     notes.value = notes.value.filter((note) => !note.trashed);
+    offerUndo("undo.emptied", () => reinsertNotes(removed), { count: removed.length });
     markDirty();
   }
 
@@ -605,6 +668,7 @@ export function useNotesStore({
 
   function dispose(): void {
     disposed = true;
+    clearUndo();
     if (clockTimer) clearInterval(clockTimer);
     if (saveTimer) clearTimeout(saveTimer);
     if (initialized && !saved.value) void persistNotes().catch(() => undefined);
@@ -652,6 +716,7 @@ export function useNotesStore({
     newNote,
     noteCounts,
     notePreview,
+    notes: readonly(notes),
     pendingDeletion,
     quitBlocked: readonly(quitBlocked),
     requestEmptyTrash,
@@ -679,6 +744,8 @@ export function useNotesStore({
     pendingTagDeletion,
     toggleArchive,
     togglePin,
+    undo,
+    undoable: readonly(undoable),
     trashOrDeleteNote,
     updateBody,
     updateTag,

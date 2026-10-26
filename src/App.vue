@@ -7,6 +7,7 @@
   import TagsDialog from "./components/dialogs/TagsDialog.vue";
   import ShortcutsDialog from "./components/dialogs/ShortcutsDialog.vue";
   import ConfirmDialog from "./components/dialogs/ConfirmDialog.vue";
+  import UndoToast from "./components/base/UndoToast.vue";
   import EditorPanel from "./components/panels/EditorPanel.vue";
   import NavigationPanel from "./components/panels/NavigationPanel.vue";
   import NotesPanel from "./components/panels/NotesPanel.vue";
@@ -85,6 +86,8 @@
     pendingTagDeletion,
     toggleArchive,
     togglePin,
+    undo,
+    undoable,
     trashOrDeleteNote,
     updateBody,
     updateTag,
@@ -195,6 +198,12 @@
       @close="closeTags"
     />
     <ShortcutsDialog v-if="shortcutsVisible" @close="shortcutsVisible = false" />
+    <UndoToast
+      v-if="undoable"
+      :message="t(undoable.message, undoable.params, Number(undoable.params.count ?? 1))"
+      :action-label="t('undo.action')"
+      @undo="undo"
+    />
     <ConfirmDialog
       v-if="pendingDeletion"
       :title="t('confirm.deleteNoteTitle')"

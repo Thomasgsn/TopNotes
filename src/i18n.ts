@@ -2,6 +2,7 @@ import { createI18n } from "vue-i18n";
 import { tagMessages } from "./tagMessages.ts";
 import { editorMessages } from "./editorMessages.ts";
 import { confirmMessages } from "./confirmMessages.ts";
+import { undoMessages } from "./undoMessages.ts";
 
 export const supportedLocales = ["fr", "en", "it", "es", "de"] as const;
 
@@ -25,6 +26,7 @@ const messages = {
     ...editorMessages.fr,
     tagManager: tagMessages.fr,
     confirm: confirmMessages.fr,
+    undo: undoMessages.fr,
     app: {
       name: "TopNotes",
       library: "Bibliothèque",
@@ -131,6 +133,7 @@ const messages = {
     ...editorMessages.en,
     tagManager: tagMessages.en,
     confirm: confirmMessages.en,
+    undo: undoMessages.en,
     app: {
       name: "TopNotes",
       library: "Library",
@@ -231,6 +234,7 @@ const messages = {
     ...editorMessages.it,
     tagManager: tagMessages.it,
     confirm: confirmMessages.it,
+    undo: undoMessages.it,
     app: {
       name: "TopNotes",
       library: "Libreria",
@@ -330,6 +334,7 @@ const messages = {
     ...editorMessages.es,
     tagManager: tagMessages.es,
     confirm: confirmMessages.es,
+    undo: undoMessages.es,
     app: {
       name: "TopNotes",
       library: "Biblioteca",
@@ -428,6 +433,7 @@ const messages = {
     ...editorMessages.de,
     tagManager: tagMessages.de,
     confirm: confirmMessages.de,
+    undo: undoMessages.de,
     app: {
       name: "TopNotes",
       library: "Mediathek",
