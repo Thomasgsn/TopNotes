@@ -122,3 +122,16 @@ Sélection limitée à ce qui a du sens pour un bloc-notes de barre de menus, lo
 ## 4. Points de format de données
 
 Aucune proposition ci-dessus n'exige de changer le format existant de manière incompatible. Les seuls ajouts envisagés sont des **champs optionnels** (`settings.sortOrder`, éventuellement `note.trashedAt` pour la purge auto et `note.wasPinned/wasArchived` pour B10), lus avec valeur par défaut côté TS **et** Rust (`#[serde(default)]`), sans bump de `schemaVersion`. Attention : Rust refuse aujourd'hui tout champ `Settings` manquant → tout ajout doit être `Option`/`default` des deux côtés.
+
+---
+
+## 5. Suivi — 26/10/2026
+
+| Statut      | Points                                                                                                                                                                                                               | Commits |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| ✅ Corrigé  | B1 `3b650be` · B2 + S3 `d2bc276` · B3 `8193601` · B4 `245d008` · B5 + B6 + U1 `2b16177` · B7 `6623e2e` · B8 `dd9bf67` · B9 `9b8f3a8` · B10 `d6ceed5` · B11 + B12 `0c9faef`                                           |         |
+| ✅ Amélioré | P1 `d4a5bec` · U2 `ca64bce` · U3 + S2 `f026621` · U4 → F6 · U5 `88e6fa2` · U6 + U7 `9f54a57` · A1–A3 `82a6de0` · S1 `bb0ef75` · Q1–Q3 `9c89936` · Q4 `5a2b3ee` · Q7 `c9ce1fd`                                        |         |
+| ✅ Ajouté   | F1 `97c5041` · F2 `17f1c10` · F3 `9ddbdf1` · F4 `0d92996` · F5 `396e97b` · F6 `ca842e9` · F7 `f026621`                                                                                                               |         |
+| ⏳ Reste    | A4 contraste des couleurs d'étiquettes · Q5 hooks husky inactifs · Q6 noms de commandes de `MarkdownEditor.format()` · clé i18n incohérente `syncedOnThisMac` (en) / `syncedInThisMac` (autres) · P2/P3 à surveiller |         |
+
+Champs ajoutés au format stocké, tous **facultatifs** (lus avec une valeur par défaut côté TS et Rust, `schemaVersion` inchangé) : `settings.sortOrder`, `note.trashedAt`. B10 a été résolu sans nouveau champ : les notes gardent leur épinglage/archivage dans la corbeille.

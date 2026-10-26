@@ -2,6 +2,12 @@
 
 Bloc-notes pour la barre des menus macOS : une fenêtre toujours au premier plan, des notes en Markdown, des étiquettes, l'épinglage, l'archive et la corbeille. Interface en français, anglais, italien, espagnol et allemand.
 
+- **⌥⌘N** affiche ou masque TopNotes depuis n'importe quelle application (liste complète des raccourcis : ⌘/ dans l'app).
+- Tri par date de modification, de création ou par titre (menu à côté du titre de la liste).
+- « Annuler » après chaque suppression ; les notes restent 30 jours dans la corbeille avant d'être supprimées.
+- ⌘+clic ouvre un lien.
+- Export JSON ou Markdown et import JSON dans Réglages › Données.
+
 Construit avec [Tauri 2](https://tauri.app) (Rust), Vue 3, TypeScript et l'éditeur [TipTap](https://tiptap.dev).
 
 ## Données
@@ -18,6 +24,7 @@ Tout reste en local, sans compte ni synchronisation.
 - Avant la première écriture de chaque jour (UTC), l'état précédent est copié dans `backups/`.
 - Si le fichier vient d'une version plus récente de TopNotes, l'app l'explique et **n'écrit rien**.
 - Pour restaurer une sauvegarde : quitter TopNotes, remplacer `topnotes.json` par la copie voulue, relancer.
+- Les exports (Réglages › Données) vont dans un nouveau dossier `~/Downloads/TopNotes AAAA-MM-JJ HH-MM/`. L'import JSON ajoute des notes sans rien remplacer.
 
 En mode navigateur (`npm run dev` sans Tauri), les données vont dans le `localStorage` de la page.
 
@@ -55,15 +62,15 @@ npm run tauri dev
 src/
   main.ts              démarrage : charge les données puis monte l'app
   persistence.ts       lecture/écriture (Tauri ou localStorage), migrations
+  exchange.ts          export JSON/Markdown, lecture des imports
   stores/notes.ts      notes, filtres, recherche, étiquettes, sauvegarde auto
   stores/settings.ts   langue, premier plan, lancement à la connexion
   editor/              extensions TipTap, Markdown, liens, raccourcis
   components/          panneaux (navigation, liste, éditeur) et dialogues
   *Messages.ts, i18n.ts  traductions
 src-tauri/src/
-  lib.rs               barre des menus, fenêtre, instance unique
+  lib.rs               barre des menus, fenêtre, instance unique, raccourci global
+  export.rs            écriture des exports dans Téléchargements
   persistence.rs       fichier JSON atomique, sauvegardes, protection des données
 tests/                 tests node:test
 ```
-
-Les raccourcis clavier sont listés dans l'application (⌘/).
